@@ -1,0 +1,260 @@
+# 09 — Player input, commands and UI packets
+
+The client→server gameplay surface (the "client protocol" core) plus the server-side UI/feedback packets. Types: [03-data-types.md](03-data-types.md).
+
+## World interaction
+
+**PlayerActionPacket (`0x24`) — C2S**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Entity ID | `VarInt` | self entity |
+| Action | `VarInt` | table below |
+| Block position | BlockPosition | relevant block (0,0,0 when unused) |
+| Face | `VarInt` | face for block actions, 255 otherwise |
+
+| Value | Action | Notes |
+|------:|--------|-------|
+| 0 | `START_BREAK` | begin mining |
+| 1 | `ABORT_BREAK` | stop mining, no break |
+| 2 | `STOP_BREAK` | finish mining tick |
+| 5 | `RELEASE_ITEM` | release bow/food/projectile |
+| 6 | `STOP_SLEEPING` | leave bed |
+| 7 | `SPAWN_SAME_DIMENSION` | respawn ready (same dimension) |
+| 8 | `JUMP` | jump |
+| 9 | `START_SPRINT` | |
+| 10 | `STOP_SPRINT` | |
+| 11 | `START_SNEAK` | |
+| 12 | `STOP_SNEAK` | |
+| 13 | `SPAWN_OVERWORLD` | respawn into overworld (dimension change) |
+| 14 | `SPAWN_NETHER` | respawn into nether (dimension change) |
+| 15 | `START_GLIDE` | elytra glide start |
+| 16 | `STOP_GLIDE` | elytra glide end |
+| 17 | `BUILD_DENIED` | server denied placement (client echoes) |
+| 18 | `CONTINUE_BREAK` | mining continues (used with `LEVEL_SOUND_EVENT`) |
+
+**RemoveBlockPacket (`0x15`) — C2S**
+
+| Field | Type |
+|-------|------|
+| Position | BlockPosition |
+
+**BlockPickRequestPacket (`0x22`) — C2S**
+
+Middle-click pick block:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Position | BlockPosition | |
+| Unknown | `Byte` | "add to creative inventory" flag |
+
+**PlayerInputPacket (`0x39`) — C2S**
+
+Riding/boat input:
+
+| Field | Type |
+|-------|------|
+| Motion X | `LFloat` (strafe input, -1..1) |
+| Motion Y | `LFloat` (forward input, -1..1) |
+| Jumping flag | `Bool` |
+| Unknown flag | `Bool` |
+
+**RiderJumpPacket (`0x14`) — C2S** — see [07](07-entities.md).
+
+**AnimatePacket (`0x2c`) — Both**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Action | `VarInt` | table below |
+| Entity ID | `VarInt` | |
+| Rowing time | `LFloat` | only for actions 128/129 |
+
+Actions: `1` SWING_ARM, `3` STOP_SLEEP, `4` CRITICAL_HIT, `128` ROW_RIGHT, `129` ROW_LEFT.
+
+## Chat and commands
+
+**TextPacket (`0x09`) — Both**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Type | `Byte` | table below |
+| Source | String | CHAT/WHISPER/POPUP only |
+| Message | String | all types |
+| Parameter count | `UnsignedVarInt` | TRANSLATION only |
+| Parameters | count × String | TRANSLATION only |
+
+| Value | Type | Notes |
+|------:|------|-------|
+| 0 | `RAW` | plain text |
+| 1 | `CHAT` | player chat (source + message) |
+| 2 | `TRANSLATION` | translation key + `%` parameters |
+| 3 | `POPUP` | popup (source + message) |
+| 4 | `TIP` | tip |
+| 5 | `SYSTEM` | system message |
+| 6 | `WHISPER` | private message |
+
+**CommandStepPacket (`0x4f`) — C2S**
+
+The 1.1 command packet — the client sends the raw command line it wants executed:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Command | String | e.g. `time set night` (without the leading slash) |
+| Overload | String | `""` |
+| Unknown step | `UnsignedVarInt` | |
+| Current step | `UnsignedVarInt` | |
+| Done | `Bool` | |
+| Client ID | `UnsignedVarLong` | |
+| Input JSON | String | JSON argument map |
+| Output JSON | String | `""` from clients |
+
+**AvailableCommandsPacket (`0x4e`) — S2C**
+
+| Field | Type |
+|-------|------|
+| Commands JSON | String |
+| Unknown | String (usually `""`) |
+
+In protocol 113 the command list is still a **JSON blob** (the binary command enumeration came in later versions): an array of command entries with `name`, `description`, `overloads` (each an array of argument arrays: `{type: "strarg"|"intarg"|"floatarg"|"cmdarg", name, options?}`) and flags such as `isUsableByPlayer`.
+
+**CommandBlockUpdatePacket (`0x50`) — C2S**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Is block | `Bool` | false = minecart command block |
+| Block position | BlockPosition | when is block |
+| Mode | `UnsignedVarInt` | 0 sequential, 1 auto, 2 loop |
+| Redstone mode | `Bool` | false = always active |
+| Conditional | `Bool` | when is block |
+| Minecart entity ID | `VarInt` | when not block |
+| Command | String | |
+| Last output | String | |
+| Name | String | |
+| Track output | `Bool` | |
+
+## Adventure settings
+
+**AdventureSettingsPacket (`0x37`) — Both**
+
+| Field | Type |
+|-------|------|
+| Flags | `UnsignedVarInt` |
+| User permission | `UnsignedVarInt` (0 normal, 1 operator, 2 host, 3 automation, 4 admin) |
+
+Flag bits:
+
+| Bit | Flag |
+|----:|------|
+| 0 | world immutable |
+| 1 | no PvP |
+| 2 | no PvM |
+| 3 | no MvP |
+| 5 | auto jump |
+| 6 | allow flight |
+| 7 | no clip |
+| 8 | world builder |
+| 9 | is flying |
+| 10 | muted |
+
+(Bit 4 is unused.) Clients send this to announce their own flight/sprint capability state; servers send it to grant permissions. A client that toggles flying without the `allowFlight` grant is detected by comparing its announcements against server state.
+
+## View radius
+
+**RequestChunkRadiusPacket (`0x45`) — C2S**
+
+| Field | Type |
+|-------|------|
+| Radius | `VarInt` (chunks) |
+
+**ChunkRadiusUpdatedPacket (`0x46`) — S2C** — the server's accepted radius.
+
+| Field | Type |
+|-------|------|
+| Radius | `VarInt` |
+
+## Maps
+
+**MapInfoRequestPacket (`0x44`) — C2S**
+
+| Field | Type |
+|-------|------|
+| Map ID | `VarInt` |
+
+**ClientboundMapItemDataPacket (`0x43`) — S2C**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Map ID | `VarInt` | |
+| Update type | `UnsignedVarInt` | bitmask: `0x02` texture, `0x04` decorations, `0x08` entity |
+| Entity count + entity IDs | `UnsignedVarInt` + count × `VarInt` | only when `0x08` |
+| Scale | `Byte` | when `0x02` or `0x04` |
+| Decoration count | `UnsignedVarInt` | only when `0x04` |
+| Decorations | count × {`VarInt` packed (rotation low nibble, image high nibble), `Byte` x offset, `Byte` y offset, String label, `LInt` ARGB color} | |
+| Width, Height, X offset, Y offset | 4 × `VarInt` | only when `0x02` |
+| Colors | width × height × `UnsignedVarInt` | row-major ABGR int per pixel |
+
+## Events
+
+**EventPacket (`0x41`) — S2C** (telemetry/eventing; opaque in the reference)
+
+| Field | Type |
+|-------|------|
+| Entity runtime ID | `VarInt` |
+| Event data | `VarInt` |
+| Type | `Byte` (0 achievement awarded, 1 entity interact, 2 portal built, 3 portal used, 4 mob killed, 5 cauldron used, 6 player death, 7 boss killed, 8 agent command, 9 agent created) |
+
+**SimpleEventPacket (`0x40`)** — defined in the ID registry but not implemented by the reference (no documented payload).
+
+## Titles and sounds
+
+**SetTitlePacket (`0x59`) — S2C**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Type | `VarInt` | 0 clear, 1 reset, 2 title, 3 subtitle, 4 action bar, 5 times |
+| Text | String | |
+| Fade in | `VarInt` | ticks |
+| Duration | `VarInt` | ticks |
+| Fade out | `VarInt` | ticks |
+
+**PlaySoundPacket (`0x57`) — S2C**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Sound name | String | e.g. `random.click` |
+| Position × 8 | BlockPosition | write `(int)(worldX * 8)`; decode divides by 8 |
+| Volume | `LFloat` | |
+| Pitch | `LFloat` | |
+
+**StopSoundPacket (`0x58`) — S2C**
+
+| Field | Type |
+|-------|------|
+| Sound name | String |
+| Stop all | `Bool` |
+
+## Trading and equipment screens
+
+**UpdateTradePacket (`0x51`) — S2C**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Window ID | `Byte` | |
+| Window type | `Byte` | hardcoded `15` (`TRADING`) by vanilla |
+| Unknown 1 | `VarInt` | not interpreted by the reference |
+| Unknown 2 | `VarInt` | not interpreted by the reference |
+| Is willing | `Bool` | villager willingness |
+| Trader entity ID | `VarInt` | |
+| Player entity ID | `VarInt` | |
+| Display name | String | trader name |
+| Offers | raw bytes | little-endian NBT compound with `Recipes` list |
+
+**UpdateEquipPacket (`0x52`) — S2C**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| Window ID | `Byte` | |
+| Window type | `Byte` | |
+| Unknown | `VarInt` | vanilla sends 0 |
+| Entity unique ID | `VarInt` | |
+| Equipment NBT | raw bytes | little-endian compound (rest of packet) |
