@@ -4,7 +4,7 @@ Everything about entities: spawning them, moving them, animating them, and the m
 
 ## Entity metadata keys and flags
 
-Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entity-metadata)). Keys used in protocol 113 (reference `Entity.php`):
+Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entity-metadata)). Keys used in protocol 113:
 
 | Key | Constant | Value type | Meaning |
 |----:|----------|------------|---------|
@@ -115,7 +115,7 @@ Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entit
 |-------|------|-------|
 | Entity unique ID | `VarInt` | |
 | Entity runtime ID | `VarInt` | |
-| Entity type | `UnsignedVarInt` | legacy numeric entity ID (see `EntityIds`, e.g. 10 chicken … 45 zombie) |
+| Entity type | `UnsignedVarInt` | legacy numeric entity ID — see [10-entity-ids.md](10-entity-ids.md) |
 | Position | 3 × `LFloat` | |
 | Velocity | 3 × `LFloat` | |
 | Pitch | `LFloat` | |
@@ -126,7 +126,7 @@ Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entit
 | Link count | `UnsignedVarInt` | |
 | Links | count × {`VarInt` from, `VarInt` to, `Byte` type} | 0 remove, 1 rider, 2 passenger |
 
-Known attribute names (reference `Attribute.php`): `minecraft:absorption`, `minecraft:player.saturation`, `minecraft:player.exhaustion`, `minecraft:knockback_resistance`, `minecraft:health`, `minecraft:movement`, `minecraft:follow_range`, `minecraft:player.hunger`, `minecraft:attack_damage`, `minecraft:player.level`, `minecraft:player.experience`, `minecraft:horse.jump_strength`.
+Known attribute name strings: `minecraft:absorption`, `minecraft:player.saturation`, `minecraft:player.exhaustion`, `minecraft:knockback_resistance`, `minecraft:health`, `minecraft:movement`, `minecraft:follow_range`, `minecraft:player.hunger`, `minecraft:attack_damage`, `minecraft:player.level`, `minecraft:player.experience`, `minecraft:horse.jump_strength`.
 
 **RemoveEntityPacket (`0x0e`) — S2C**
 
@@ -164,7 +164,7 @@ Known attribute names (reference `Attribute.php`): `minecraft:absorption`, `mine
 | Direction | `VarInt` (0 south, 1 west, 2 north, 3 east) |
 | Motive | String (painting title) |
 
-**AddItemPacket (`0x4b`) — S2C** — legacy "creative content" item announcement; reference body is just:
+**AddItemPacket (`0x4b`) — S2C** — legacy item announcement; the body is just:
 
 | Field | Type |
 |-------|------|
@@ -179,7 +179,7 @@ Known attribute names (reference `Attribute.php`): `minecraft:absorption`, `mine
 
 ## Movement packets
 
-**MoveEntityPacket (`0x12`) — Both** (S2C broadcast; the reference additionally accepts it C2S for entities the player drives)
+**MoveEntityPacket (`0x12`) — Both** (servers broadcast it; clients driving a vehicle also send it for the vehicle)
 
 | Field | Type |
 |-------|------|
@@ -315,4 +315,4 @@ Type-dependent body:
 | 6 | unknown | `LShort` unknown, `UnsignedVarInt` color, `UnsignedVarInt` overlay |
 | 7 | `TEXTURE` (S2C) | `UnsignedVarInt` color, `UnsignedVarInt` overlay |
 
-(The reference's decode/encode fall through from `SHOW` into types 6/7 — a `SHOW` event therefore carries all five trailing fields, as listed above.)
+(A `SHOW` event carries all five trailing fields, as listed above.)

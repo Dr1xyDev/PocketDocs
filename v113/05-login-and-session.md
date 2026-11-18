@@ -4,7 +4,7 @@ This file covers everything from the established UDP session (end of [01-transpo
 
 ## Session flow overview
 
-The reference server's sequence (`Player.php`, `processLogin()` / `completeLoginSequence()` / `doFirstSpawn()`):
+The canonical protocol-113 session sequence:
 
 ```
 Client                                    Server
@@ -50,26 +50,26 @@ The *connection request* buffer contains the auth payload:
 
 ### The auth chain
 
-Each string in `chain` is a JWT (`base64url(header).base64url(payload).base64url(signature)`), signed **ES384** (ECDSA P-384, 96-byte raw signature) and chained: each link's header contains `x5u` (the public key that must match the previous payload's `identityPublicKey`); the last link is signed by Mojang's public key. The reference server verifies this chain in `VerifyLoginTask` and marks the player Xbox-authenticated when it holds — servers in offline mode skip the check.
+Each string in `chain` is a JWT (`base64url(header).base64url(payload).base64url(signature)`), signed **ES384** (ECDSA P-384, 96-byte raw signature) and chained: each link's header contains `x5u` (the public key that must match the previous payload's `identityPublicKey`); the last link is signed by Mojang's public key. The client presents this chain so the server can verify Xbox Live authentication; servers running in offline mode may accept it without verifying signatures.
 
-Claims read by the reference from the chain (link containing `extraData`):
+Claims present in the chain (the link containing `extraData`):
 
 | Claim | Meaning |
 |-------|---------|
 | `extraData.displayName` | Xbox Live gamertag → used as the player name |
 | `extraData.identity` | Xbox identity UUID (string) |
 | `extraData.XUID` | Xbox User ID string |
-| `extraData.titleId` | title ID (not read by the reference) |
+| `extraData.titleId` | title ID (optional) |
 | `identityPublicKey` | public key for the *next* chain link (base64 DER) |
 | `exp`, `nbf` | standard JWT expiry/not-before timestamps |
 
 ### The client-data JWT payload
 
-Claims read by the reference implementation (all optional in practice):
+Claims the client puts in the client-data JWT (all optional in practice):
 
 | Claim | Type | Meaning |
 |-------|------|---------|
-| `ClientRandomId` | Long | random client ID (session identifier shown in server logs) |
+| `ClientRandomId` | Long | random per-launch client ID |
 | `ServerAddress` | String | `host:port` the client is connecting to |
 | `SkinId` | String | skin identifier string |
 | `SkinData` | String | base64 of raw skin image bytes (64×64 RGBA = 16384 bytes, or 64×32 = 8192 for legacy) |
@@ -85,18 +85,18 @@ Claims read by the reference implementation (all optional in practice):
 | `GameVersion` | String | e.g. `1.1.7` |
 | `ADRole` | Int | education-edition role |
 
-**DeviceOS values** (from the reference `types/OS.php`): `-1` unknown, `1` Android, `2` iOS, `3` macOS/OSX, `4` Amazon FireOS, `5` Gear VR, `6` HoloLens, `7` Windows 10 (UWP), `8` Windows 32-bit, `9` Dedicated, `10` tvOS, `11` PlayStation, `12` Nintendo, `13` Xbox, `14` Windows Phone. (Values ≥ 9 are not produced by 1.1.x clients; they are listed for completeness.)
+**DeviceOS values** (as encoded by 1.1.x-era clients): `-1` unknown, `1` Android, `2` iOS, `3` macOS/OSX, `4` Amazon FireOS, `5` Gear VR, `6` HoloLens, `7` Windows 10 (UWP), `8` Windows 32-bit, `9` Dedicated, `10` tvOS, `11` PlayStation, `12` Nintendo, `13` Xbox, `14` Windows Phone. (Values ≥ 9 are not produced by 1.1.x clients; they are listed for completeness.)
 
 There are **no further fields after the client-data JWT** in protocol 113 — username, UUID and skin all come from the JWTs.
 
 ## Encryption handshake
 
-`EncryptionContext` in the reference implements the 1.1-era scheme:
+The 1.1-era scheme:
 
 1. Server generates an ephemeral **ECDH key pair on secp384r1** and a random 16-byte salt/token.
 2. Server sends **`0x03 ServerToClientHandshake`** — sent *unencrypted*, immediately before enabling its cipher.
-3. Client derives: shared secret = ECDH(client's `identityPublicKey` private counterpart, server public key); encryption key = **SHA-256(salt ‖ shared-secret)** (salt first, per `EncryptionUtils::generateKey()`).
-4. Client replies **`0x04 ClientToServerHandshake`** and enables its cipher; the server, upon receiving `0x04`, continues login processing (`processLogin()`).
+3. Client derives: shared secret = ECDH(client's `identityPublicKey` private counterpart, server public key); encryption key = **SHA-256(salt ‖ shared-secret)** (salt first).
+4. Client replies **`0x04 ClientToServerHandshake`** and enables its cipher; upon receiving `0x04`, the server continues the login sequence.
 
 Both `0x03` and `0x04` are sent/received *inside* `0xFE` batches; the first encrypted bytes are the *next* batch's payload (after the `0xFE` byte).
 
@@ -111,9 +111,9 @@ Both `0x03` and `0x04` are sent/received *inside* `0xFE` batches; the first encr
 
 No payload.
 
-**Cipher**: AES-256-CFB8, IV = first 16 bytes of the encryption key (reference `EncryptionContext::cfb8()`). Vanilla 1.1.x clients do **not** append a checksum after each encrypted payload; see the note in [02-framing-batching.md](02-framing-batching.md).
+**Cipher**: AES-256-CFB8, IV = first 16 bytes of the encryption key. Vanilla 1.1.x clients do **not** append a checksum after each encrypted payload; see the note in [02-framing-batching.md](02-framing-batching.md).
 
-Encryption is optional: reference servers fall back to plain login when encryption is disabled, and offline-mode servers may skip Xbox verification entirely.
+Encryption is optional — a server may skip the handshake entirely and continue in plaintext.
 
 ## PlayStatusPacket (`0x02`) — S2C
 
@@ -193,7 +193,7 @@ Each entry:
 | Field | Type |
 |-------|------|
 | Pack ID | String |
-| Max chunk size | `LInt` (reference uses 128 KiB per chunk) |
+| Max chunk size | `LInt` (128 KiB is the typical chunk size) |
 | Chunk count | `LInt` (`ceil(size / maxChunkSize)`) |
 | Compressed pack size | `LLong` |
 | SHA-256 hash | String (32 raw bytes) |
@@ -228,4 +228,4 @@ Tells the client to disconnect and connect to another server:
 
 * After `0x0b StartGame` the client requests a view radius (`0x45`) and starts accepting `0x3a FullChunkData` batches. Servers must send `0x02 PlayStatus(PLAYER_SPAWN)` only once enough chunks are out; the client freezes movement until then.
 * If encryption was negotiated, the entire post-login flow still runs over the encrypted batches — nothing changes at the game-packet layer.
-* On modernized reference servers the login chain may be skipped entirely for offline play, in which case the client-data JWT claims become the only identity source (`ClientRandomId`, `SkinData`, `DeviceOS`…).
+* For offline play a server may accept the login without verifying the chain, in which case the client-data JWT claims are the only identity source (`ClientRandomId`, `SkinData`, `DeviceOS`…).

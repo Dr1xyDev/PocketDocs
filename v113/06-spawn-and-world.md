@@ -9,7 +9,7 @@ The single most important spawn packet; sent once, before chunks:
 | # | Field | Type | Notes |
 |--:|-------|------|-------|
 | 1 | Entity unique ID | `VarInt` (entity ID, zigzag) | the player's entity |
-| 2 | Entity runtime ID | `VarInt` | same value in the reference |
+| 2 | Entity runtime ID | `VarInt` | same value as the unique ID |
 | 3 | Player gamemode | `VarInt` | 0 survival, 1 creative, 2 adventure; spectator is sent as creative (`getClientFriendlyGamemode`) |
 | 4–6 | Player position | 3 × `LFloat` | x, y (feet + eye offset), z |
 | 7 | Pitch | `LFloat` | |
@@ -114,7 +114,7 @@ The client answers the dimension change with `0x24 PlayerAction` actions 13 (`SP
 | Chunk Z | `VarInt` |
 | Chunk data | String (`UnsignedVarInt` length + bytes) |
 
-One packet per column. The payload ("chunk data") layout, exactly as the reference serializes it (`Chunk::networkSerialize()`):
+One packet per column. The payload ("chunk data") layout, exactly as serialized for the client:
 
 | Section | Size | Contents |
 |---------|-----:|----------|
@@ -124,7 +124,7 @@ One packet per column. The payload ("chunk data") layout, exactly as the referen
 | Biome IDs | 256 bytes | one byte per (x,z) column |
 | Border block count | 1 byte | always `0x00` (entries would crash the stock client) |
 | Extra data | VarInt count + entries | entry = `VarInt` key, `LShort` value |
-| Tile NBT | variable | serialized little-endian spawn compounds of every `Spawnable` tile in the chunk, back-to-back |
+| Tile NBT | variable | serialized little-endian NBT compounds of the chunk's tiles, back-to-back |
 
 Each **sub-chunk section** is:
 
@@ -144,7 +144,7 @@ Each **sub-chunk section** is:
 | Block ID | `UnsignedVarInt` | |
 | Meta + flags | `UnsignedVarInt` | packed `meta & 0x0F`, flags in the upper 4 bits |
 
-Flag bits: `0b0001` neighbors, `0b0010` network, `0b0100` no-graphic, `0b1000` priority. Reference servers commonly send `FLAG_NETWORK` (0b0010) → combined value `0x20 | meta`.
+Flag bits: `0b0001` neighbors, `0b0010` network, `0b0100` no-graphic, `0b1000` priority. The client applies the block visually when the network flag (`0b0010`) is set; a common combined value on the wire is `0x20 | meta`.
 
 ### BlockEventPacket (`0x1b`) — S2C
 
@@ -180,7 +180,7 @@ Server→client: full replacement of a tile's NBT. Client→server: sign text an
 | Position | 3 × `LFloat` |
 | Data | `VarInt` |
 
-Event ID constants (from the reference):
+Event ID constants:
 
 | Value | Constant | Meaning |
 |------:|----------|---------|
@@ -237,4 +237,4 @@ Client→server copies are relayed by the server to nearby viewers.
 | Baby sound | `Bool` | |
 | Relative volume disabled | `Bool` | |
 
-Sound enum (reference `LevelSoundEventPacket`): `0` ITEM_USE_ON, `1` HIT, `2` STEP, `3` JUMP, `4` BREAK, `5` PLACE, `6` HEAVY_STEP, `7` GALLOP, `8` FALL, `9` AMBIENT, `10` AMBIENT_BABY, `11` AMBIENT_IN_WATER, `12` BREATHE, `13` DEATH, `14` DEATH_IN_WATER, `15` DEATH_TO_ZOMBIE, `16` HURT, `17` HURT_IN_WATER, `18` MAD, `19` BOOST, `20` BOW, `21` SQUISH_BIG, `22` SQUISH_SMALL, `23` FALL_BIG, `24` FALL_SMALL, `25` SPLASH, `26` FIZZ, `27` FLAP, `28` SWIM, `29` DRINK, `30` EAT, `31` TAKEOFF, `32` SHAKE, `33` PLOP, `34` LAND, `35` SADDLE, `36` ARMOR, `37` ADD_CHEST, `38` THROW, `39` ATTACK, `40` ATTACK_NODAMAGE, `41` WARN, `42` SHEAR, `43` MILK, `44` THUNDER, `45` EXPLODE, `46` FIRE, `47` IGNITE, `48` FUSE, `49` STARE, `50` SPAWN, `51` SHOOT, `52` BREAK_BLOCK, `53` REMEDY, `54` UNFECT, `55` LEVELUP, `56` BOW_HIT, `57` BULLET_HIT, `58` EXTINGUISH_FIRE, `59` ITEM_FIZZ, `60` CHEST_OPEN, `61` CHEST_CLOSED, `62` SHULKERBOX_OPEN, `63` SHULKERBOX_CLOSED, `64` POWER_ON, `65` POWER_OFF, `66` ATTACH, `67` DETACH, `68` DENY, `69` TRIPOD, `70` POP, `71` DROP_SLOT, `72` NOTE, `73` THORNS, `74` PISTON_IN, `75` PISTON_OUT, `76` PORTAL, `77` WATER, `78` LAVA_POP, `79` LAVA, `80` BURP, `81` BUCKET_FILL_WATER, `82` BUCKET_FILL_LAVA, `83` BUCKET_EMPTY_WATER, `84` BUCKET_EMPTY_LAVA, `85` GUARDIAN_FLOP, `86` ELDERGUARDIAN_CURSE, `87` MOB_WARNING, `88` MOB_WARNING_BABY, `89` TELEPORT, `90` SHULKER_OPEN, `91` SHULKER_CLOSE, `92` HAGGLE, `93` HAGGLE_YES, `94` HAGGLE_NO, `95` HAGGLE_IDLE, `96` CHORUSGROW, `97` CHORUSDEATH, `98` GLASS, `99` CAST_SPELL, `100` PREPARE_ATTACK, `101` PREPARE_SUMMON, `102` PREPARE_WOLOLO, `103` FANG, `104` CHARGE, `105` CAMERA_TAKE_PICTURE, `106` DEFAULT, `107` UNDEFINED.
+Sound enum: `0` ITEM_USE_ON, `1` HIT, `2` STEP, `3` JUMP, `4` BREAK, `5` PLACE, `6` HEAVY_STEP, `7` GALLOP, `8` FALL, `9` AMBIENT, `10` AMBIENT_BABY, `11` AMBIENT_IN_WATER, `12` BREATHE, `13` DEATH, `14` DEATH_IN_WATER, `15` DEATH_TO_ZOMBIE, `16` HURT, `17` HURT_IN_WATER, `18` MAD, `19` BOOST, `20` BOW, `21` SQUISH_BIG, `22` SQUISH_SMALL, `23` FALL_BIG, `24` FALL_SMALL, `25` SPLASH, `26` FIZZ, `27` FLAP, `28` SWIM, `29` DRINK, `30` EAT, `31` TAKEOFF, `32` SHAKE, `33` PLOP, `34` LAND, `35` SADDLE, `36` ARMOR, `37` ADD_CHEST, `38` THROW, `39` ATTACK, `40` ATTACK_NODAMAGE, `41` WARN, `42` SHEAR, `43` MILK, `44` THUNDER, `45` EXPLODE, `46` FIRE, `47` IGNITE, `48` FUSE, `49` STARE, `50` SPAWN, `51` SHOOT, `52` BREAK_BLOCK, `53` REMEDY, `54` UNFECT, `55` LEVELUP, `56` BOW_HIT, `57` BULLET_HIT, `58` EXTINGUISH_FIRE, `59` ITEM_FIZZ, `60` CHEST_OPEN, `61` CHEST_CLOSED, `62` SHULKERBOX_OPEN, `63` SHULKERBOX_CLOSED, `64` POWER_ON, `65` POWER_OFF, `66` ATTACH, `67` DETACH, `68` DENY, `69` TRIPOD, `70` POP, `71` DROP_SLOT, `72` NOTE, `73` THORNS, `74` PISTON_IN, `75` PISTON_OUT, `76` PORTAL, `77` WATER, `78` LAVA_POP, `79` LAVA, `80` BURP, `81` BUCKET_FILL_WATER, `82` BUCKET_FILL_LAVA, `83` BUCKET_EMPTY_WATER, `84` BUCKET_EMPTY_LAVA, `85` GUARDIAN_FLOP, `86` ELDERGUARDIAN_CURSE, `87` MOB_WARNING, `88` MOB_WARNING_BABY, `89` TELEPORT, `90` SHULKER_OPEN, `91` SHULKER_CLOSE, `92` HAGGLE, `93` HAGGLE_YES, `94` HAGGLE_NO, `95` HAGGLE_IDLE, `96` CHORUSGROW, `97` CHORUSDEATH, `98` GLASS, `99` CAST_SPELL, `100` PREPARE_ATTACK, `101` PREPARE_SUMMON, `102` PREPARE_WOLOLO, `103` FANG, `104` CHARGE, `105` CAMERA_TAKE_PICTURE, `106` DEFAULT, `107` UNDEFINED.

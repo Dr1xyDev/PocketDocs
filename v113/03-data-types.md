@@ -32,7 +32,7 @@ Bytes are LEB128: 7 data bits per byte, MSB set on every byte except the last. `
 
 Example: value `2` → raw `0x04`; value `-1` → raw `0x01`; value `-2` → raw `0x03`; value `300` → raw `0xAC 0x02`.
 
-Entity IDs ("EntityUniqueID"/"EntityRuntimeID") are `VarInt`/`VarLong` depending on era; in protocol 113 the reference implementation reads/writes **all** entity IDs as `VarInt` (`getEntityId()` / `putEntityId()`), and entity *unique* IDs the same way. `EventPacket` additionally uses the same accessor for its runtime ID.
+Entity IDs ("EntityUniqueID"/"EntityRuntimeID") changed width across MCPE history; in protocol 113 **all** entity IDs are `VarInt`.
 
 ## String
 
@@ -53,7 +53,7 @@ i.e. bytes = `LE64( (seg0 << 32) | seg1 ) ++ LE64( (seg2 << 32) | seg3 )`.
 
 ## Float vectors and positions
 
-**Vector3f** — 3 × `LFloat` (x, y, z). The reference rounds to 4 decimal places when reading; treat as ordinary floats on the wire.
+**Vector3f** — 3 × `LFloat` (x, y, z). Implementations of the era round to 4 decimal places when reading; treat as ordinary floats on the wire.
 
 **BlockPosition (getBlockCoords / putBlockCoords)**:
 

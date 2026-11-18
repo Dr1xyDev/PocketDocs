@@ -2,7 +2,7 @@
 
 MCPE 1.1.x speaks its game protocol on top of a modified RakNet, carried over plain **UDP**. The default server port is **19132** (the client defaults to it; a server may listen anywhere, and the port is entered manually or discovered via LAN broadcast). RakNet provides reliability, ordering, fragmentation and session management; every MCPE "game packet" (see [02-framing-batching.md](02-framing-batching.md)) travels as the payload of exactly one RakNet encapsulated packet.
 
-Reference implementation: `raklib/protocol/*` in Aquamarine (`stable`).
+Reference for the byte formats below: `raklib/protocol/*` in Aquamarine (`stable`).
 
 ## Protocol constants
 
@@ -10,7 +10,7 @@ Reference implementation: `raklib/protocol/*` in Aquamarine (`stable`).
 |----------|-------|
 | RakNet protocol version (sent in `Open Connection Request 1`) | **8** |
 | Offline message *magic* (16 bytes) | `00 ff ff 00 fe fe fe fe fd fd fd fd 12 34 56 78` |
-| Default MTU used by reference servers | 1492 |
+| Default MTU used in practice | 1492 (clients probe downward from here) |
 | Maximum ordering channels | 32 |
 | ACK message ID | `0xc0` |
 | NACK message ID | `0xa0` |
@@ -38,13 +38,13 @@ Used by the server list and LAN discovery. Payload:
 | Magic | 16 bytes |
 | Advertisement string | Short BE length + ASCII bytes |
 
-The advertisement string is what the server-list entry displays. Reference servers emit it as a semicolon-separated string:
+The advertisement string is what the server-list entry displays. It is a semicolon-separated string:
 
 ```
 MCPE;<MOTD>;<protocol number>;<network version>;<players online>;<max players>;<server GUID>;<software name>;<default gamemode name>;
 ```
 
-For a protocol-113 server the protocol field is `113` and the version field is typically `1.1.7`. (In `RakLibInterface::setName()` the version slot is left empty by the reference; the client tolerates it.)
+For a protocol-113 server the protocol field is `113` and the version field is typically `1.1.7` (an empty version field is tolerated by the client).
 
 ### Open Connection Request 1 (`0x05`) — C2S
 
@@ -186,7 +186,7 @@ Each encapsulated packet carries exactly one higher-layer message (for MCPE: one
 | 6 | Reliable with ACK receipt | ✓ | – |
 | 7 | Reliable Ordered with ACK receipt | ✓ | ✓ |
 
-MCPE game packets are sent with **Reliable Ordered on order channel 0** by reference servers (`RakLibInterface::putPacket()`); vanilla 1.1 clients likewise use reliable-ordered on channel 0 for session/login traffic and for gameplay.
+MCPE game packets are always sent with **Reliable Ordered on order channel 0**, in both directions — vanilla 1.1.x clients use reliable-ordered channel 0 for session/login traffic and for gameplay alike.
 
 ### Split packets
 

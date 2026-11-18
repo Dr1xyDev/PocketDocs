@@ -115,7 +115,7 @@ The 1.1 command packet — the client sends the raw command line it wants execut
 | Commands JSON | String |
 | Unknown | String (usually `""`) |
 
-In protocol 113 the command list is still a **JSON blob** (the binary command enumeration came in later versions): an array of command entries with `name`, `description`, `overloads` (each an array of argument arrays: `{type: "strarg"|"intarg"|"floatarg"|"cmdarg", name, options?}`) and flags such as `isUsableByPlayer`.
+In protocol 113 the command list is still a **JSON blob** (the binary command enumeration came in later versions): an object keyed by command name, each with a `versions` array containing `aliases`, `description`, `overloads` and `permission`. The full schema is documented in [11-available-commands-json.md](11-available-commands-json.md).
 
 **CommandBlockUpdatePacket (`0x50`) — C2S**
 
@@ -156,7 +156,7 @@ Flag bits:
 | 9 | is flying |
 | 10 | muted |
 
-(Bit 4 is unused.) Clients send this to announce their own flight/sprint capability state; servers send it to grant permissions. A client that toggles flying without the `allowFlight` grant is detected by comparing its announcements against server state.
+(Bit 4 is unused.) Clients send this to announce their own flight/sprint capability state; servers send it to grant permissions, and treat client announcements as advisory (the server state wins on conflict).
 
 ## View radius
 
@@ -195,7 +195,7 @@ Flag bits:
 
 ## Events
 
-**EventPacket (`0x41`) — S2C** (telemetry/eventing; opaque in the reference)
+**EventPacket (`0x41`) — S2C** (informational eventing; the client does not act on it)
 
 | Field | Type |
 |-------|------|
@@ -203,7 +203,7 @@ Flag bits:
 | Event data | `VarInt` |
 | Type | `Byte` (0 achievement awarded, 1 entity interact, 2 portal built, 3 portal used, 4 mob killed, 5 cauldron used, 6 player death, 7 boss killed, 8 agent command, 9 agent created) |
 
-**SimpleEventPacket (`0x40`)** — defined in the ID registry but not implemented by the reference (no documented payload).
+**SimpleEventPacket (`0x40`)** — defined in the ID registry; no payload documentation is available for protocol 113.
 
 ## Titles and sounds
 
@@ -241,8 +241,8 @@ Flag bits:
 |-------|------|-------|
 | Window ID | `Byte` | |
 | Window type | `Byte` | hardcoded `15` (`TRADING`) by vanilla |
-| Unknown 1 | `VarInt` | not interpreted by the reference |
-| Unknown 2 | `VarInt` | not interpreted by the reference |
+| Unknown 1 | `VarInt` | no documented meaning in 1.1 |
+| Unknown 2 | `VarInt` | no documented meaning in 1.1 |
 | Is willing | `Bool` | villager willingness |
 | Trader entity ID | `VarInt` | |
 | Player entity ID | `VarInt` | |

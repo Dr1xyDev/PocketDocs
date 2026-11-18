@@ -76,8 +76,6 @@ Special window IDs used in place of a real container id when addressing player i
 | Action | `Byte` | 1 right-click, 2 left-click (attack/damage), 3 leave vehicle, 4 mouse-over (hover), 6 open inventory |
 | Target entity ID | `VarInt` | 0 for action 6 |
 
-A quirk of the reference server: an incoming `0x21 0x04 0x00` (mouse-over with target 0) is silently dropped as an empty no-op.
-
 **UseItemPacket (`0x23`) — C2S**
 
 Right-click / interact-with-block packet. Placing blocks, using items on blocks, eating starts, throwing projectiles (with an empty block target):
@@ -155,7 +153,7 @@ Full window replacement (also used at login for inventory/armor/hotbar/creative 
 | Hotbar count | `UnsignedVarInt` | always present |
 | Hotbar entries | count × `VarInt` | hotbar slot → inventory slot index (only when window ID = 0) |
 
-**ReplaceItemInSlotPacket (`0x48`) — S2C** — reference body is a single Slot (item replacement announcement; not used by stock servers in 1.1).
+**ReplaceItemInSlotPacket (`0x48`) — S2C** — the body is a single Slot (item replacement announcement; rarely used in 1.1).
 
 ## Crafting
 
@@ -196,7 +194,7 @@ Client reports it performed a crafting-grid recipe:
 
 **InventoryActionPacket (`0x2f`) — Both (legacy)**
 
-Compatibility packet from the pre-1.0 era kept in the GenisysPro lineage:
+Compatibility packet from the pre-1.0 era:
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -205,4 +203,4 @@ Compatibility packet from the pre-1.0 era kept in the GenisysPro lineage:
 | Enchantment ID | `VarInt` | |
 | Enchantment level | `VarInt` | |
 
-Stock 1.1.x clients do not drive inventory through this packet; they use `ContainerSetSlotPacket`. It is documented because reference servers still decode and route it.
+Stock 1.1.x clients do not drive inventory through this packet; they use `ContainerSetSlotPacket`. It is documented for completeness of the ID registry.

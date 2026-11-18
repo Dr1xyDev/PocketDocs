@@ -4,6 +4,8 @@ This directory documents the **client protocol of Minecraft: Pocket Edition 1.1.
 
 Everything here is reconstructed byte-by-byte from working protocol implementations of the era — primarily [Aquamarine-Team/Aquamarine](https://github.com/Aquamarine-Team/Aquamarine) (branch `stable`, a GenisysPro/PocketMine-MP lineage server that implements protocol 113 exactly), cross-checked against [GenisysPro/GenisysPro](https://github.com/GenisysPro/GenisysPro). Both repositories carry an **identical** packet ID table for protocol 113 (93 IDs, `0x01`–`0x5d`, verified by diff). Historical version numbers are taken from the Minecraft Wiki *Protocol version* list (mirrored on minecraft.fandom.com).
 
+**Scope:** this documentation covers only the **wire protocol that speaks with the client** — transport, framing, packet layouts and the client's side of every exchange. Server software internals (packet dispatch, anti-abuse limits, permission logic, implementation quirks) are intentionally out of scope; where a byte format was taken from server software, only the wire-visible part is documented.
+
 ## Version ↔ protocol mapping
 
 | Protocol | Game version | Notes |
@@ -15,12 +17,12 @@ Everything here is reconstructed byte-by-byte from working protocol implementati
 | 105 | 1.0.6.0 (alpha build) | 1.0 era |
 | 106 | 1.0.6 | 1.0 era |
 | 107 | 1.0.9 | 1.0 era |
-| **110** | 1.1.0.5 (beta build) | accepted by reference servers |
-| **111** | 1.1.0.8 (beta build) | accepted by reference servers |
-| **112** | 1.1.0.9 (beta build) | accepted by reference servers |
+| **110** | 1.1.0.5 (beta build) | accepted by 1.1.x-era server software |
+| **111** | 1.1.0.8 (beta build) | accepted by 1.1.x-era server software |
+| **112** | 1.1.0.9 (beta build) | accepted by 1.1.x-era server software |
 | **113** | **1.1.0 – 1.1.7 releases** | **this documentation** |
 
-Reference servers built for 1.1.x declare `CURRENT_PROTOCOL = 113`, `MINECRAFT_VERSION_NETWORK = "1.1.7"` and `MINECRAFT_VERSION = ["v1.1.0", "v1.1.1", "v1.1.2", "v1.1.3", "v1.1.4", "v1.1.5", "v1.1.7"]`, i.e. every 1.1.x release spoke the same protocol 113; only the 1.1.0 pre-release builds had their own numbers (110/111/112). A client announcing protocol 113 identifies itself as a 1.1.x client.
+Protocol-113 implementations of the era declare `CURRENT_PROTOCOL = 113` with `MINECRAFT_VERSION = ["v1.1.0", "v1.1.1", "v1.1.2", "v1.1.3", "v1.1.4", "v1.1.5", "v1.1.7"]` and `MINECRAFT_VERSION_NETWORK = "1.1.7"` — i.e. every 1.1.x release spoke the same protocol 113; only the 1.1.0 pre-release builds had their own numbers (110/111/112). A client announcing protocol 113 identifies itself as a 1.1.x client.
 
 ## File index
 
@@ -35,6 +37,8 @@ Reference servers built for 1.1.x declare `CURRENT_PROTOCOL = 113`, `MINECRAFT_V
 | [07-entities.md](07-entities.md) | Add/Remove/Move entity packets, entity metadata key and flag tables, attributes, effects, links, PlayerList, BossEvent, EntityEvent constants |
 | [08-inventory-and-items.md](08-inventory-and-items.md) | Container window IDs, equipment, container open/close/set packets, crafting data/event, drop-item, item frames, legacy InventoryAction |
 | [09-player-input-and-ui.md](09-player-input-and-ui.md) | Client→server gameplay: PlayerAction actions, UseItem, RemoveBlock, Animate, PlayerInput, AdventureSettings flags, chat/Text, commands, maps, titles, sounds, trade/equip |
+| [10-entity-ids.md](10-entity-ids.md) | Legacy numeric entity type table (`AddEntityPacket` type field, `0x01`–`0x69` and beyond) |
+| [11-available-commands-json.md](11-available-commands-json.md) | The `AvailableCommandsPacket` JSON schema: command entries, versions, overloads, parameters |
 
 ## Conventions
 
@@ -43,10 +47,10 @@ Reference servers built for 1.1.x declare `CURRENT_PROTOCOL = 113`, `MINECRAFT_V
 - `VarInt` (zigzag) / `VarUInt` (plain LEB128) etc. follow the naming of the reference implementation; see [03-data-types.md](03-data-types.md) for exact encodings.
 - Packet names use the reference implementation class names (`LoginPacket`, `StartGamePacket`, …), which match the names used by PocketMine/GenisysPro lineage servers.
 - Wire tables use: *offsets relative to the packet body*, *types as defined in 03-data-types.md*.
-- "Reference implementation" = Aquamarine `stable` (commit `47766f0`), the direct GenisysPro descendant implementing protocol 113. Where the vanilla client's behaviour differs from what a reference server enforces, it is noted inline.
+- "Reference implementation" = Aquamarine `stable` (commit `47766f0`). It is cited only as the provenance of byte formats; its internal behaviour is not documented here.
 
 ## Sources
 
-- `Aquamarine-Team/Aquamarine` — `stable` branch: `pocketmine/network/mcpe/protocol/*`, `pocketmine/utils/BinaryStream.php`, `pocketmine/entity/Entity.php`, `raklib/*`, `pocketmine/Player.php`, `pocketmine/network/mcpe/raklib/RakLibInterface.php`, `pocketmine/network/mcpe/encryption/*`.
-- `GenisysPro/GenisysPro` — `master`: `src/pocketmine/network/mcpe/protocol/ProtocolInfo.php` (ID table identical to Aquamarine's, 93 entries).
+- `Aquamarine-Team/Aquamarine` — `stable` branch (commit `47766f0`): packet classes, wire helpers, entity metadata/ID constants, encryption scheme, RakNet formats.
+- `GenisysPro/GenisysPro` — `master`: protocol ID table (identical to Aquamarine's, 93 entries).
 - Minecraft Wiki, *Protocol version* (minecraft.wiki / minecraft.fandom.com mirror) for the historical protocol↔version table.

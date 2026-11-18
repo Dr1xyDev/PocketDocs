@@ -21,7 +21,7 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 | 15 | `0x0f` | AddItemEntityPacket | S2C | [07](07-entities.md) |
 | 16 | `0x10` | AddHangingEntityPacket | S2C | [07](07-entities.md) |
 | 17 | `0x11` | TakeItemEntityPacket | S2C | [07](07-entities.md) |
-| 18 | `0x12` | MoveEntityPacket | S2C (C2S for ridden entities in the reference) | [07](07-entities.md) |
+| 18 | `0x12` | MoveEntityPacket | Both (clients driving a vehicle report the vehicle's movement) | [07](07-entities.md) |
 | 19 | `0x13` | MovePlayerPacket | Both | [07](07-entities.md) |
 | 20 | `0x14` | RiderJumpPacket | C2S | [07](07-entities.md) |
 | 21 | `0x15` | RemoveBlockPacket | C2S | [09](09-player-input-and-ui.md) |
@@ -67,7 +67,7 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 | 61 | `0x3d` | ChangeDimensionPacket | S2C | [06](06-spawn-and-world.md) |
 | 62 | `0x3e` | SetPlayerGameTypePacket | Both | [09](09-player-input-and-ui.md) |
 | 63 | `0x3f` | PlayerListPacket | S2C | [07](07-entities.md) |
-| 64 | `0x40` | SimpleEventPacket | reserved — defined in `ProtocolInfo`, **no class in the reference** | — |
+| 64 | `0x40` | SimpleEventPacket | reserved — defined in the registry, **no wire payload documented for 1.1** | — |
 | 65 | `0x41` | EventPacket | S2C | [09](09-player-input-and-ui.md) |
 | 66 | `0x42` | SpawnExperienceOrbPacket | S2C | [07](07-entities.md) |
 | 67 | `0x43` | ClientboundMapItemDataPacket | S2C | [09](09-player-input-and-ui.md) |
@@ -93,14 +93,14 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 | 87 | `0x57` | PlaySoundPacket | S2C | [09](09-player-input-and-ui.md) |
 | 88 | `0x58` | StopSoundPacket | S2C | [09](09-player-input-and-ui.md) |
 | 89 | `0x59` | SetTitlePacket | S2C | [09](09-player-input-and-ui.md) |
-| 90 | `0x5a` | AddBehaviorTreePacket | reserved — defined in `ProtocolInfo`, **no class in the reference** | — |
-| 91 | `0x5b` | StructureBlockUpdatePacket | reserved — defined in `ProtocolInfo`, **no class in the reference** | — |
-| 92 | `0x5c` | ShowStoreOfferPacket | reserved — defined in `ProtocolInfo`, **no class in the reference** | — |
-| 93 | `0x5d` | PurchaseReceiptPacket | reserved — defined in `ProtocolInfo`, **no class in the reference** | — |
+| 90 | `0x5a` | AddBehaviorTreePacket | reserved — defined in the registry, **no wire payload documented for 1.1** | — |
+| 91 | `0x5b` | StructureBlockUpdatePacket | reserved — defined in the registry, **no wire payload documented for 1.1** | — |
+| 92 | `0x5c` | ShowStoreOfferPacket | reserved — defined in the registry, **no wire payload documented for 1.1** | — |
+| 93 | `0x5d` | PurchaseReceiptPacket | reserved — defined in the registry, **no wire payload documented for 1.1** | — |
 | 254 | `0xFE` | BatchPacket | Both (wrapper) | [02](02-framing-batching.md) |
 
 ## Notes on directions
 
-* The reference server's C2S dispatch (`Player::handleDataPacket`) handles: `0x01` Login, `0x04` ClientToServerHandshake, `0x08` ResourcePackClientResponse, `0x09` Text, `0x12` MoveEntity, `0x13` MovePlayer, `0x19` LevelSoundEvent, `0x1c` EntityEvent, `0x1f` MobEquipment, `0x20` MobArmorEquipment, `0x21` Interact, `0x23` UseItem, `0x24` PlayerAction, `0x2c` Animate, `0x2e` DropItem, `0x31` ContainerClose, `0x32` ContainerSetSlot, `0x36` CraftingEvent, `0x37` AdventureSettings, `0x38` BlockEntityData, `0x39` PlayerInput, `0x3e` SetPlayerGameType, `0x44` MapInfoRequest, `0x45` RequestChunkRadius, `0x47` ItemFrameDropItem, `0x55` ResourcePackChunkRequest. Any other ID arriving from a client is ignored by the server but still decodes cleanly.
-* Packets that only ever originate from the client (login flow, gameplay actions) have no server-side `encode()` in the reference, and vice versa — the unused direction is left as an empty method body there. Both directions are documented anyway, since proxies and third-party clients need both.
-* `InventoryActionPacket` (`0x2f`) with actions *give item* (0) / *enchant item* (2) is a compatibility leftover from the pre-1.0 era kept in the GenisysPro lineage; stock 1.1.x clients drive inventory changes through `ContainerSetSlotPacket` instead (see [08](08-inventory-and-items.md)).
+* Packets that originate from the vanilla client are the session/login set (`0x01` Login, `0x04` ClientToServerHandshake, `0x08` ResourcePackClientResponse, `0x55` ResourcePackChunkRequest) plus gameplay reports: `0x13` MovePlayer, `0x12` MoveEntity (driving a vehicle), `0x19` LevelSoundEvent, `0x1c` EntityEvent, `0x1f` MobEquipment, `0x20` MobArmorEquipment, `0x21` Interact, `0x23` UseItem, `0x24` PlayerAction, `0x15` RemoveBlock, `0x22` BlockPickRequest, `0x25` EntityFall, `0x14` RiderJump, `0x2c` Animate, `0x39` PlayerInput, `0x2e` DropItem, `0x31` ContainerClose, `0x32` ContainerSetSlot, `0x36` CraftingEvent, `0x38` BlockEntityData, `0x37` AdventureSettings, `0x09` Text, `0x4f` CommandStep, `0x44` MapInfoRequest, `0x45` RequestChunkRadius, `0x47` ItemFrameDropItem. Everything else in the registry is server→client.
+* Both directions are documented for every packet regardless, since proxies and third-party clients need both.
+* `InventoryActionPacket` (`0x2f`) with actions *give item* (0) / *enchant item* (2) is a compatibility leftover from the pre-1.0 era; stock 1.1.x clients drive inventory changes through `ContainerSetSlotPacket` instead (see [08](08-inventory-and-items.md)).
