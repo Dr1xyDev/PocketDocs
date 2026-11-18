@@ -35,7 +35,7 @@
 | 38 | Enderman | 83 | Painting |
 | 39 | Silverfish | 84 | Minecart |
 | 40 | Cave Spider | 85 | Large Fireball (ghast fireball) |
-| 41 | Ghast | 86 | Splash Potion |
+| 41 | Ghast | 86 | Splash Potion (aka Thrown Potion) |
 | 42 | Magma Cube | 87 | Ender Pearl |
 | 43 | Blaze | 88 | Leash Knot |
 | 44 | Zombie Villager | 89 | Wither Skull |

@@ -8,11 +8,9 @@ All packet bodies are streams of the primitives below. Names follow the referenc
 |------|-----:|----------|:------:|
 | `Byte` | 1 | raw byte | unsigned (0–255) |
 | `Bool` | 1 | `0x00` false, anything else true | – |
-| `Short` | 2 | big-endian | signed |
-| `UShort` | 2 | big-endian | unsigned |
-| `LShort` | 2 | little-endian | signed |
-| `UnsignedLShort` | 2 | little-endian | unsigned |
-| `Triad` | 3 | little-endian | unsigned (RakNet only) |
+| `Short` | 2 | big-endian | **unsigned** in the reference (`getShort()`); the signed variant is `SignedShort` |
+| `LShort` | 2 | little-endian | **signed by default** in the reference (`getLShort()`; `getLShort(false)` for unsigned) |
+| `Triad` / `LTriad` | 3 | `Triad` big-endian, `LTriad` little-endian | unsigned — RakNet uses the LE one |
 | `Int` | 4 | **big-endian** | signed |
 | `LInt` | 4 | little-endian | signed |
 | `LLong` | 8 | little-endian | signed |
@@ -30,7 +28,7 @@ Bytes are LEB128: 7 data bits per byte, MSB set on every byte except the last. `
 * `VarInt` = the raw LEB128 value **zigzag-decoded**: `raw ^ (raw >> 31)` … precisely `decoded = (raw >> 1) ^ -(raw & 1)`. Encode: `raw = (n << 1) ^ (n >> 31)`.
 * `VarLong` uses the same zigzag on 64 bits; `UnsignedVarLong` is plain.
 
-Example: value `2` → raw `0x04`; value `-1` → raw `0x01`; value `-2` → raw `0x03`; value `300` → raw `0xAC 0x02`.
+Example: value `2` → VarInt raw `0x04`; value `-1` → raw `0x01`; value `-2` → raw `0x03`; value `300` → VarInt raw `0xD8 0x04` (zigzag 300 = 600; `0xAC 0x02` is the **UnsignedVarInt** encoding of 300).
 
 Entity IDs ("EntityUniqueID"/"EntityRuntimeID") changed width across MCPE history; in protocol 113 **all** entity IDs are `VarInt`.
 
@@ -65,7 +63,7 @@ i.e. bytes = `LE64( (seg0 << 32) | seg1 ) ++ LE64( (seg2 << 32) | seg3 )`.
 
 **SignedBlockPosition** — 3 × `VarInt` (x, y, z) — used by `ExplodePacket` records.
 
-**ByteRotation** — one `Byte`; degrees = `value × (360 / 256)`. Write `round(degrees × 256 / 360)`. Used for pitch/yaw/head-yaw in `MoveEntityPacket`.
+**ByteRotation** — one `Byte`; degrees = `value × (360 / 256)`. Write with **truncation**: `(int)(degrees × 256 / 360)` (the reference's `putByteRotation` casts to int — e.g. 50° → 35, not 36). Used for pitch/yaw/head-yaw in `MoveEntityPacket`.
 
 ## Slot (ItemStack) — item encoding
 
@@ -73,7 +71,7 @@ The single most reused structure in the protocol. All items in inventories, enti
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Item ID | `VarInt` (zigzag) | `0` = empty item; **if 0, the slot ends here** (no further fields) |
+| Item ID | `VarInt` (zigzag) | `0` = empty item; **an `id ≤ 0` value ends the slot** (a negative zigzag value terminates too — no further fields) |
 | Aux value | `VarInt` (zigzag) | packed: `(damage & 0x7FFF) << 8 \| (count & 0xFF)` — low byte is the stack **count**, upper 15 bits the item **damage/meta**; `0x7FFF` damage means "any damage" |
 | NBT length | `LShort` | byte length of the NBT blob |
 | NBT data | *nbtLen* bytes | little-endian NBT, network flavor, only if `nbtLen > 0` |
@@ -82,7 +80,7 @@ The single most reused structure in the protocol. All items in inventories, enti
 | CanDestroy count | `VarInt` | number of block identifiers following |
 | CanDestroy entries | count × String | |
 
-Example: a stack of 64 unenchanted oak planks (ID 5) → `05 40 00 00 00 00 00` (ID=5, aux = 64 → `0x40`, nbtLen=0, placeOn=0, destroy=0). An empty slot is exactly one byte `00`.
+Example: a stack of 64 unenchanted oak planks (ID 5) → `0A 80 01 00 00 00 00` (ID 5 zigzag → `0x0A`; auxValue = 64 zigzag → `0x80 0x01`; nbtLen = 0 → `00 00`; placeOn = 0 → `00`; destroy = 0 → `00`). An empty slot is exactly one byte `00`.
 
 ## Entity metadata
 

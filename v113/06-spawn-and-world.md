@@ -119,7 +119,7 @@ One packet per column. The payload ("chunk data") layout, exactly as serialized 
 | Section | Size | Contents |
 |---------|-----:|----------|
 | Sub-chunk count | 1 byte | number of following sub-chunk sections |
-| Sub-chunk sections | count × 10 497 bytes | see below |
+| Sub-chunk sections | count × 10 241 bytes | see below (1 + 4096 + 2048×3) |
 | Heightmap | 256 × `LShort` | one column height per (x,z), little-endian |
 | Biome IDs | 256 bytes | one byte per (x,z) column |
 | Border block count | 1 byte | always `0x00` (entries would crash the stock client) |
@@ -131,8 +131,8 @@ Each **sub-chunk section** is:
 | Field | Size | Contents |
 |-------|-----:|----------|
 | Storage version | 1 byte | `0x00` (legacy, non-paletted) |
-| Block IDs | 4096 bytes | one byte per block, y-major order (y×16×16 + z×16 + x) |
-| Block metadata | 2048 bytes | 4-bit nibbles, two blocks per byte (even index = low nibble) |
+| Block IDs | 4096 bytes | one byte per block, **x-major order**: index = `x×256 + z×16 + y` |
+| Block metadata | 2048 bytes | 4-bit nibbles in the same x-major order; of each byte's pair, the even **y** goes in the low nibble |
 | Sky light | 2048 bytes | nibbles, same order |
 | Block light | 2048 bytes | nibbles, same order |
 

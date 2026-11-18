@@ -222,7 +222,7 @@ Known attribute name strings: `minecraft:absorption`, `minecraft:player.saturati
 |-------|------|-------|
 | Entity ID | `VarInt` | |
 | Event | `Byte` | 1 add, 2 modify, 3 remove |
-| Effect ID | `VarInt` | vanilla effect ID (1 speed … 25 bad omen era) |
+| Effect ID | `VarInt` | vanilla effect ID (1 speed … 24 levitation; this protocol era ends at 24) |
 | Amplifier | `VarInt` | |
 | Particles | `Bool` | |
 | Duration | `VarInt` | ticks |

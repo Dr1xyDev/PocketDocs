@@ -34,7 +34,7 @@ Special window IDs used in place of a real container id when addressing player i
 |------:|---------|
 | 0 | `SPECIAL_INVENTORY` (main inventory, 36 slots) |
 | 0x77 | `SPECIAL_OFFHAND` |
-| 0x78 | `SPECIAL_ARMOR` (4 slots: feet, legs, chest, head) |
+| 0x78 | `SPECIAL_ARMOR` (4 slots: head, chest, legs, feet) |
 | 0x79 | `SPECIAL_CREATIVE` |
 | 0x7a | `SPECIAL_HOTBAR` |
 | 0x7b | `SPECIAL_FIXED_INVENTORY` |
@@ -74,7 +74,7 @@ Special window IDs used in place of a real container id when addressing player i
 | Field | Type | Notes |
 |-------|------|-------|
 | Action | `Byte` | 1 right-click, 2 left-click (attack/damage), 3 leave vehicle, 4 mouse-over (hover), 6 open inventory |
-| Target entity ID | `VarInt` | 0 for action 6 |
+| Target entity ID | `VarInt` | entity acted upon; action 6 carries the entity whose inventory is opened (e.g. a horse) |
 
 **UseItemPacket (`0x23`) — C2S**
 
@@ -82,9 +82,9 @@ Right-click / interact-with-block packet. Placing blocks, using items on blocks,
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Block position | BlockPosition | block being interacted with (0,0,0 for air actions) |
+| Block position | BlockPosition | block being interacted with; for air actions (face −1) the fields carry the **aim direction vector** (each component × 32768) |
 | Block ID | `UnsignedVarInt` | ID of the block at the target |
-| Face | `VarInt` | 0–5 face clicked, 255 for air |
+| Face | `VarInt` (signed) | 0–5 face clicked, **−1** for air actions (not 255) |
 | Click cursor position | 3 × `LFloat` | offset of the click on the face |
 | Player position | 3 × `LFloat` | client player position |
 | Slot | `VarInt` | held hotbar slot |

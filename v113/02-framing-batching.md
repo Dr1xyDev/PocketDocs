@@ -47,7 +47,7 @@ Protocol 113 supports an AES-256-CFB8 encrypted channel (see [05-login-and-sessi
 
 Both sides encrypt only the batch body: the `0xFE` byte is prepended *after* encryption when sending, and stripped *before* decryption when receiving. The `0xFE` byte itself is **never** encrypted.
 
-Checksum trailer note: vanilla 1.1.x clients **do not append a checksum** to encrypted batches. (8-byte `sha256(counter_LE || payload || key)` prefix-truncated checksums are a convention of 1.6+ clients.) A 1.1.x client therefore sends encrypted payloads exactly as produced by the zlib stage.
+Checksum trailer: 1.1-era server implementations append an **8-byte checksum** to every encrypted payload they send — the first 8 bytes of `sha256(counter_LE ‖ payload ‖ key)` (counter = a little-endian 64-bit integer, incremented per encrypted payload) — and do **not** verify or strip a checksum on receive. Vanilla 1.1.x clients send encrypted batches **without** a checksum; a client-compatible endpoint should therefore send without one and be prepared for a trailing 8-byte checksum on payloads it receives.
 
 ## Where each direction puts things
 

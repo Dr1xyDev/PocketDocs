@@ -8,10 +8,11 @@ The canonical protocol-113 session sequence:
 
 ```
 Client                                    Server
-  |--- 0x01 Login ------------------------>|  (Xbox chain verified; optional encryption)
+  |--- 0x01 Login ------------------------>|
+  |<-- 0x02 PlayStatus(LOGIN_SUCCESS) -----|  (sent immediately, before chain verification)
   |<-- 0x03 ServerToClientHandshake -------|  (only if encryption enabled)
   |--- 0x04 ClientToServerHandshake ------>|
-  |<-- 0x02 PlayStatus(LOGIN_SUCCESS) -----|
+  |<-- 0x02 PlayStatus(LOGIN_SUCCESS) -----|  (sent again once the login is accepted)
   |<-- 0x06 ResourcePacksInfo ------------ |
   |--- 0x08 ResourcePackClientResponse --->|  (SEND_PACKS if packs need downloading)
   |<-- 0x53 ResourcePackDataInfo × N ------|
@@ -21,11 +22,12 @@ Client                                    Server
   |<-- 0x07 ResourcePackStack -------------|
   |--- 0x08 ResourcePackClientResponse --->|  (COMPLETED)
   |<-- 0x0b StartGame ---------------------|
+  |<-- 0x0a SetTime / 0x1e UpdateAttributes / 0x3f PlayerList  (right after StartGame)
   |--- 0x45 RequestChunkRadius ----------->|
   |<-- 0x46 ChunkRadiusUpdated ------------|
   |<-- 0x3a FullChunkData × N -------------|  (batched)
-  |<-- spawn packets (SetTime, UpdateAttributes, PlayerList, entities…) |
   |<-- 0x02 PlayStatus(PLAYER_SPAWN) ------|
+  |<-- entity/item spawn packets ----------|  (with and after the spawn chunks)
   |--- 0x13 MovePlayer / 0x24 PlayerAction |  (normal gameplay begins)
 ```
 
@@ -46,11 +48,11 @@ The *connection request* buffer contains the auth payload:
 | 0 | Chain JSON length | `LInt` (little-endian!) | |
 | 4 | Chain JSON | bytes | JSON object `{"chain": ["<JWT>", "<JWT>", …]}` |
 | +0 | Client data JWT length | `LInt` | |
-| +4 | Client data JWT | bytes | single JWT, **unsigned** (no signature) |
+| +4 | Client data JWT | bytes | single JWT **signed ES384 with the key carried at the end of the chain** |
 
 ### The auth chain
 
-Each string in `chain` is a JWT (`base64url(header).base64url(payload).base64url(signature)`), signed **ES384** (ECDSA P-384, 96-byte raw signature) and chained: each link's header contains `x5u` (the public key that must match the previous payload's `identityPublicKey`); the last link is signed by Mojang's public key. The client presents this chain so the server can verify Xbox Live authentication; servers running in offline mode may accept it without verifying signatures.
+Each string in `chain` is a JWT (`base64url(header).base64url(payload).base64url(signature)`), signed **ES384** (ECDSA P-384, 96-byte raw signature) and chained: each link's header contains `x5u` (the public key that must match the previous payload's `identityPublicKey`); the first link is self-signed. A chain is treated as **Xbox-authenticated when any link is signed by Mojang's root public key**. Servers verify every signature (chain *and* client-data JWT) and reject invalid ones; "offline mode" only relaxes the requirement that the chain be Mojang-signed — it does not skip signature verification.
 
 Claims present in the chain (the link containing `extraData`):
 
@@ -87,6 +89,8 @@ Claims the client puts in the client-data JWT (all optional in practice):
 
 **DeviceOS values** (as encoded by 1.1.x-era clients): `-1` unknown, `1` Android, `2` iOS, `3` macOS/OSX, `4` Amazon FireOS, `5` Gear VR, `6` HoloLens, `7` Windows 10 (UWP), `8` Windows 32-bit, `9` Dedicated, `10` tvOS, `11` PlayStation, `12` Nintendo, `13` Xbox, `14` Windows Phone. (Values ≥ 9 are not produced by 1.1.x clients; they are listed for completeness.)
 
+> Note on claim interpretation: era server implementations parse these claims but only *act* on `ClientRandomId`, `ServerAddress`, `SkinId`, `SkinData`, `LanguageCode`, `DeviceOS` and the input-mode values; `XUID`, `titleId`, `SkinImageWidth`/`SkinImageHeight`, `UIProfile`, `GuiScale`, `TenantId`, `GameVersion` and `ADRole` are client-side conventions carried through uninterpreted.
+
 There are **no further fields after the client-data JWT** in protocol 113 — username, UUID and skin all come from the JWTs.
 
 ## Encryption handshake
@@ -105,7 +109,7 @@ Both `0x03` and `0x04` are sent/received *inside* `0xFE` batches; the first encr
 | Field | Type |
 |-------|------|
 | Public key | String — base64 DER of the server's ephemeral public key |
-| Server token | String — base64 of the 16-byte salt used in key derivation |
+| Server token | String — the **raw 16-byte salt** (varint length + raw bytes, *not* base64) used in key derivation |
 
 **ClientToServerHandshakePacket (`0x04`) — C2S**
 
@@ -228,4 +232,4 @@ Tells the client to disconnect and connect to another server:
 
 * After `0x0b StartGame` the client requests a view radius (`0x45`) and starts accepting `0x3a FullChunkData` batches. Servers must send `0x02 PlayStatus(PLAYER_SPAWN)` only once enough chunks are out; the client freezes movement until then.
 * If encryption was negotiated, the entire post-login flow still runs over the encrypted batches — nothing changes at the game-packet layer.
-* For offline play a server may accept the login without verifying the chain, in which case the client-data JWT claims are the only identity source (`ClientRandomId`, `SkinData`, `DeviceOS`…).
+* Servers verify the login chain even in offline mode; offline mode only relaxes the Mojang-signed requirement. Identity data (name, UUID, skin, device info) always comes from the JWT claims (`ClientRandomId`, `SkinData`, `DeviceOS`…).

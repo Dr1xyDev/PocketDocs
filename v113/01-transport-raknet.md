@@ -1,6 +1,6 @@
 # 01 — Transport layer: RakNet over UDP
 
-MCPE 1.1.x speaks its game protocol on top of a modified RakNet, carried over plain **UDP**. The default server port is **19132** (the client defaults to it; a server may listen anywhere, and the port is entered manually or discovered via LAN broadcast). RakNet provides reliability, ordering, fragmentation and session management; every MCPE "game packet" (see [02-framing-batching.md](02-framing-batching.md)) travels as the payload of exactly one RakNet encapsulated packet.
+MCPE 1.1.x speaks its game protocol on top of a modified RakNet, carried over plain **UDP**. The default server port is **19132** (the client defaults to it; a server may listen anywhere, and the port is entered manually or discovered via LAN broadcast). RakNet provides reliability, ordering, fragmentation and session management; every MCPE "game packet" (see [02-framing-batching.md](02-framing-batching.md)) travels as one RakNet message, carried in encapsulated packets — a message larger than the MTU is split across several encapsulated packets and reassembled by the receiver.
 
 Reference for the byte formats below: `raklib/protocol/*` in Aquamarine (`stable`).
 
@@ -17,7 +17,7 @@ Reference for the byte formats below: `raklib/protocol/*` in Aquamarine (`stable
 
 ## Offline (sessionless) messages
 
-Offline messages are identified by a single message ID byte followed by the 16-byte *magic*. They are used before a session exists, and for ping/discovery at any time.
+Offline messages are identified by a single message ID byte; the 16-byte *magic* follows (a few messages put a timestamp or GUID first — the per-message tables below are exact). They are used before a session exists, and for ping/discovery at any time.
 
 ### Unconnected Ping (`0x01`) — C2S
 
@@ -38,13 +38,13 @@ Used by the server list and LAN discovery. Payload:
 | Magic | 16 bytes |
 | Advertisement string | Short BE length + ASCII bytes |
 
-The advertisement string is what the server-list entry displays. It is a semicolon-separated string:
+The advertisement string is what the server-list entry displays. It is a semicolon-separated string (a literal `;` inside a field is backslash-escaped):
 
 ```
 MCPE;<MOTD>;<protocol number>;<network version>;<players online>;<max players>;<server GUID>;<software name>;<default gamemode name>;
 ```
 
-For a protocol-113 server the protocol field is `113` and the version field is typically `1.1.7` (an empty version field is tolerated by the client).
+For a protocol-113 server the protocol field is `113`. Era server implementations leave the version field **empty** (the client tolerates this); a 1.1.7 server can fill it with `1.1.7`.
 
 ### Open Connection Request 1 (`0x05`) — C2S
 
@@ -54,7 +54,7 @@ For a protocol-113 server the protocol field is `113` and the version field is t
 | RakNet protocol version | Byte (`8` for MCPE) |
 | MTU probe padding | zero bytes, sized so the datagram equals the MTU being probed |
 
-The client sends several probes at decreasing sizes (starting around 1492, falling back to 576 etc.); the largest that fits is chosen. If the server does not support the protocol version it answers with **Incompatible Protocol Version (`0x19`)**:
+The client sends several probes at decreasing sizes; the largest that fits is chosen (the era's RakNet implementations floor at 400). If the server does not support the protocol version it answers with **Incompatible Protocol Version (`0x19`)**:
 
 | Field | Type |
 |-------|------|
@@ -80,15 +80,18 @@ The client sends several probes at decreasing sizes (starting around 1492, falli
 | MTU size | Short, BE |
 | Client GUID | Long, BE |
 
-**Address structure** (little-endian fields inside RakNet messages):
+**Address structure** (used inside RakNet messages; per-field endianness below):
 
-| Field | Type | Notes |
-|-------|------|-------|
-| IP version | Byte | 4 = IPv4, 6 = IPv6 |
-| (IPv4 only) family | Byte | AF_INET = 2; servers write 2 |
-| Port | Short, BE | |
-| IPv4 address | 4 bytes | one byte per octet |
-| (IPv6) family / port / flow info / address | — | AF_INET6 = 23, port BE, Int flow info BE, 16-byte address |
+| Field | Type | Present when |
+|-------|------|--------------|
+| IP version | Byte | always — `4` = IPv4, `6` = IPv6 |
+| (IPv4) IP address | 4 bytes | IPv4 — one byte per octet, each stored **bitwise-inverted** (`~b & 0xff`) |
+| (IPv4) Port | Short, BE | IPv4 |
+| (IPv6) Family | Short, **LE** | IPv6 — the platform `AF_INET6` constant (10 on Linux, 23 on Windows) |
+| (IPv6) Port | Short, BE | IPv6 |
+| (IPv6) Flow info | Int, BE | IPv6 (0 in practice) |
+| (IPv6) Address | 16 bytes | IPv6 |
+| (IPv6) Scope ID | Int, BE | IPv6 (0 in practice) |
 
 ### Open Connection Reply 2 (`0x08`) — S2C
 
@@ -164,10 +167,10 @@ Each encapsulated packet carries exactly one higher-layer message (for MCPE: one
 |-------|------|--------------|
 | Flags byte | Byte | always — reliability `<< 5`, split flag `0x10` |
 | Payload length | Short, BE — **in bits** (`byteCount << 3`) | always; reader computes `ceil(bits / 8)` |
-| Message index | 3-byte LE triad | reliability ≥ 2 (reliable) |
+| Message index | 3-byte LE triad | reliability 2, 3, 4, 6 or 7 (reliable; not 5) |
 | Sequence index | 3-byte LE triad | reliability 1 or 4 (sequenced) |
-| Order index | 3-byte LE triad | reliability 3 or 4 (ordered/sequenced) |
-| Order channel | Byte | reliability 3 or 4 |
+| Order index | 3-byte LE triad | reliability 1, 3, 4 or 7 (sequenced-or-ordered) |
+| Order channel | Byte | reliability 1, 3, 4 or 7 |
 | Split count | Int, BE | split flag set |
 | Split ID | Short, BE | split flag set |
 | Split index | Int, BE | split flag set |
