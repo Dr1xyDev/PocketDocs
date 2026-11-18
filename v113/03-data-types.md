@@ -25,12 +25,12 @@ All packet bodies are streams of the primitives below. Names follow the referenc
 Bytes are LEB128: 7 data bits per byte, MSB set on every byte except the last. `UnsignedVarInt` stops after 5 bytes; `VarLong` variants after 10.
 
 * `UnsignedVarInt` = the raw LEB128 value.
-* `VarInt` = the raw LEB128 value **zigzag-decoded**: `raw ^ (raw >> 31)` … precisely `decoded = (raw >> 1) ^ -(raw & 1)`. Encode: `raw = (n << 1) ^ (n >> 31)`.
+* `VarInt` = the raw LEB128 value **zigzag-decoded**: `decoded = (raw >> 1) ^ -(raw & 1)`. Encode: `raw = (n << 1) ^ (n >> 31)`.
 * `VarLong` uses the same zigzag on 64 bits; `UnsignedVarLong` is plain.
 
 Example: value `2` → VarInt raw `0x04`; value `-1` → raw `0x01`; value `-2` → raw `0x03`; value `300` → VarInt raw `0xD8 0x04` (zigzag 300 = 600; `0xAC 0x02` is the **UnsignedVarInt** encoding of 300).
 
-Entity IDs ("EntityUniqueID"/"EntityRuntimeID") changed width across MCPE history; in protocol 113 **all** entity IDs are `VarInt`.
+Entity IDs ("EntityUniqueID"/"EntityRuntimeID") changed width across MCPE history; in protocol 113 **all** entity IDs are `VarInt` — with one caveated exception: the EventPacket (`0x41`) runtime-ID field, whose accessor is missing from the reference source so its width is unverifiable (see [09](09-player-input-and-ui.md#events)).
 
 ## String
 
@@ -128,4 +128,9 @@ Rules used by 1.1 servers include `naturalregeneration` (Bool) and `experimental
 
 ## NBT
 
-Block entities, tile spawn compounds, trade/equip contents and item NBT use Minecraft's **little-endian NBT** (tag type `Byte`, name length `LShort`, name UTF-8, payload). `BlockEntityDataPacket` sends the compound raw (no length prefix); `FullChunkDataPacket` appends tile compounds back-to-back (each is a complete little-endian compound); `UpdateEquipPacket` sends the remainder of the packet as one compound; item NBT inside Slots is length-prefixed by the Slot's `LShort`.
+All NBT on the 113 wire is **little-endian**, in two flavors:
+
+* **Network flavor** — block entities (`BlockEntityDataPacket`), tile spawn compounds (appended back-to-back to chunk data by `FullChunkDataPacket`), trade offers (`UpdateTradePacket`) and equip contents (`UpdateEquipPacket`, which sends the remainder of the packet as one compound): tag type `Byte`, **name length `UnsignedVarInt`**, name UTF-8, payload — with `IntTag` as `VarInt`, `LongTag` as `VarLong`, string values and list counts VarInt-prefixed as well. `BlockEntityDataPacket` sends the compound raw (no length prefix).
+* **Plain little-endian flavor** — item NBT inside Slots only: name length `LShort` (the same `LShort` that length-prefixes the NBT inside the Slot, see [08](08-inventory-and-items.md)), `IntTag`/`LongTag` as fixed-width `LInt`/`LLong`.
+
+Compounds in both flavors end with a `TAG_End` (`0x00`) byte. Tag IDs `0x00`–`0x0b` exist in protocol 113 (no `LongArray`).

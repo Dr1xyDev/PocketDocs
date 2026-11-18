@@ -156,7 +156,7 @@ Flag bits:
 | 9 | is flying |
 | 10 | muted |
 
-(Bit 4 is unused.) Clients send this to announce their own state; the reference server acts on two announced bits — **flying (bit 9)**, which is reverted when `allowFlight` is false (server state wins, settings re-sent), and **no-clip (bit 7)**, which is *enforced*: announcing it without permission gets the client kicked. Everything else is advisory.
+(Bit 4 is unused.) Clients send this to announce their own state; the reference server routes announced **flying (bit 9)** and **no-clip (bit 7)** without permission through the same cheat-handling path, which cancels the flight toggle and re-sends the server's settings (server state wins). A dedicated no-clip kick branch exists in the source but is unreachable dead code — in practice nothing beyond the revert is enforced. Everything else is advisory.
 
 ## View radius
 
@@ -247,7 +247,7 @@ Flag bits:
 | Trader entity ID | `VarInt` | |
 | Player entity ID | `VarInt` | |
 | Display name | String | trader name |
-| Offers | raw bytes | little-endian NBT compound with `Recipes` list |
+| Offers | raw bytes | little-endian **network-flavor** NBT compound with `Recipes` list (see [03](03-data-types.md#nbt)) |
 
 **UpdateEquipPacket (`0x52`) — S2C**
 

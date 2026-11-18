@@ -34,7 +34,7 @@ Decompressed sub-packet bytes are then parsed as: `[packet ID byte][packet body 
 
 ## Compression details
 
-* The zlib stream is standard `zlib` (raw deflate wrapped in a zlib header with an Adler-32 trailer). Decoders must accept any valid zlib stream; in particular some implementations **store** small batches uncompressed (compression level 0) to save CPU.
+* The zlib stream is standard `zlib` (raw deflate wrapped in a zlib header with an Adler-32 trailer). Decoders must accept any valid zlib stream. The reference server batches payloads **below 256 bytes** (config `network.batch-threshold`) at compression level 0 — i.e. *stored*, zlib header `78 01` — and everything else at level 6 by default (header `78 9C`).
 * Chunks are the largest traffic source: one `FullChunkDataPacket` per column is batched on its own.
 
 ## Encryption interplay
@@ -51,17 +51,19 @@ Checksum trailer: 1.1-era server implementations append an **8-byte checksum** t
 
 ## Where each direction puts things
 
-* **C2S**: the vanilla 1.1.x client wraps *every* game packet in a Batch — including `LoginPacket` itself. There are no "unbatched" client packets in protocol 113.
+* **C2S**: the client sends *everything* inside a Batch (see "The `0xFE` identifier" above) — there are no unbatched client packets in protocol 113.
 * **S2C**: servers likewise deliver every game packet inside a Batch. Batches are never nested (a Batch is never a sub-packet of another Batch).
 
-Worked example (hex, uncompressed for clarity):
+Worked example (hex; payload shown inflated for clarity — at 13 bytes it is below the 256-byte threshold, so a real server would send it *stored* with a `78 01` header; the `78 9C` header shown corresponds to the default level-6 stream):
 
 ```
 FE                                  batch
-  78 9C ...                         zlib header + deflated body
+  78 9C ...                         zlib header + deflated body (78 01 when stored)
   inflated:
     08  (UnsignedVarInt)            length = 8 bytes
     09 00 05 44 72 31 78 79         sub-packet 0x09 TextPacket (type raw, text "Dr1xy")
     03  (UnsignedVarInt)            length = 3 bytes
     21 04 00                        sub-packet 0x21 InteractPacket (action 4, target 0)
 ```
+
+(Note: the reference server's receive path silently drops a `21 04 00` InteractPacket as a known mouseover-spam filter, so that exact sub-packet would never reach packet handlers.)

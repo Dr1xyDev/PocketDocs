@@ -104,7 +104,7 @@ The client answers the dimension change with `0x24 PlayerAction` actions 13 (`SP
 | Camera entity ID | `VarInt` |
 | Player entity ID | `VarInt` |
 
-## Chunk packets
+## Chunk and block packets
 
 ### FullChunkDataPacket (`0x3a`) — S2C
 

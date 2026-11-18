@@ -150,7 +150,7 @@ Encryption is optional — a server may skip the handshake entirely and continue
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Must accept | `Bool` | forces the client to accept or disconnect |
+| Must accept | `Bool` | forces the client to accept or disconnect; reference sends `resourcePacksRequired()` (config `force_resources`, default `false`) |
 | Behavior pack entry count | `LShort` | |
 | Behavior pack entries | repeated below | |
 | Resource pack entry count | `LShort` | |
@@ -184,7 +184,7 @@ Each entry:
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Must accept | `Bool` | reference default `false` (config `force_resources`); forcing `true` makes the client drop its own local packs |
+| Must accept | `Bool` | always `false` — hardcoded at the reference's send site regardless of config; forcing `true` makes the client drop its own local packs |
 | Behavior stack count | `UnsignedVarInt` | |
 | Behavior stack entries | String pack ID, String version — per entry | |
 | Resource stack count | `UnsignedVarInt` | |

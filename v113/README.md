@@ -30,21 +30,21 @@ Protocol-113 implementations of the era declare `CURRENT_PROTOCOL = 113` with `M
 |------|----------|
 | [01-transport-raknet.md](01-transport-raknet.md) | UDP transport: RakNet offline handshake, datagrams, encapsulation, reliability, ordering channels, server discovery |
 | [02-framing-batching.md](02-framing-batching.md) | The `0xFE` Batch packet, zlib compression, sub-packet framing, encryption interplay, size limits |
-| [03-data-types.md](03-data-types.md) | Every wire-level data type: primitives, VarInt/VarLong (LEB128 + zigzag), String, UUID, Vector3f, positions, Slot/ItemStack, entity metadata, game rules |
+| [03-data-types.md](03-data-types.md) | Every wire-level data type: primitives, VarInt/VarLong (LEB128 + zigzag), String, UUID, Vector3f, positions, Slot/ItemStack, entity metadata, game rules, wire NBT flavors |
 | [04-packet-ids.md](04-packet-ids.md) | Complete packet ID registry for protocol 113 (`0x01`–`0x5d` + `0xFE`) with directions and category routing |
 | [05-login-and-session.md](05-login-and-session.md) | Login packet, auth chain JWTs, client-data JWT claims, encryption handshake, PlayStatus, Disconnect, the six resource-pack packets, Transfer, full session flow |
 | [06-spawn-and-world.md](06-spawn-and-world.md) | StartGame and every spawn/world packet, chunk serialization format (sub-chunks, heightmap, biomes, extra data, tile NBT), block updates, LevelEvent/LevelSoundEvent constants |
 | [07-entities.md](07-entities.md) | Add/Remove/Move entity packets, entity metadata key and flag tables, attributes, effects, links, PlayerList, BossEvent, EntityEvent constants |
 | [08-inventory-and-items.md](08-inventory-and-items.md) | Container window IDs, equipment, container open/close/set packets, crafting data/event, drop-item, item frames, legacy InventoryAction |
 | [09-player-input-and-ui.md](09-player-input-and-ui.md) | Client→server gameplay: PlayerAction actions, UseItem, RemoveBlock, Animate, PlayerInput, AdventureSettings flags, chat/Text, commands, maps, titles, sounds, trade/equip |
-| [10-entity-ids.md](10-entity-ids.md) | Legacy numeric entity type table (`AddEntityPacket` type field, `0x01`–`0x69` and beyond) |
+| [10-entity-ids.md](10-entity-ids.md) | Legacy numeric entity type table (`AddEntityPacket` type field, `0x0a`–`0x69`) — the complete set for protocol 113 |
 | [11-available-commands-json.md](11-available-commands-json.md) | The `AvailableCommandsPacket` JSON schema: command entries, versions, overloads, parameters |
 
 ## Conventions
 
 - **C2S** = client → server, **S2C** = server → client. "The client" is the Minecraft PE 1.1.x game client; this documentation is written from the client protocol's perspective, so client-side encode/decode obligations are called out per packet.
 - Byte layouts are given in transmission order. Unless a field explicitly says *big-endian*, all multi-byte scalars are **little-endian**.
-- `VarInt` (zigzag) / `VarUInt` (plain LEB128) etc. follow the naming of the reference implementation; see [03-data-types.md](03-data-types.md) for exact encodings.
+- `VarInt` (zigzag) / `UnsignedVarInt` (plain LEB128) etc. follow the naming of the reference implementation; see [03-data-types.md](03-data-types.md) for exact encodings.
 - Packet names use the reference implementation class names (`LoginPacket`, `StartGamePacket`, …), which match the names used by PocketMine/GenisysPro lineage servers.
 - Wire tables use: *offsets relative to the packet body*, *types as defined in 03-data-types.md*.
 - "Reference implementation" = Aquamarine `stable` (commit `47766f0`). It is cited only as the provenance of byte formats; its internal behaviour is not documented here.

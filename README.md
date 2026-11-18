@@ -5,4 +5,4 @@ Documentation of protocols for older versions of Minecraft Pocket Edition
 
 | Version | Directory | Protocol | Status |
 |---------|-----------|---------:|--------|
-| MCPE 1.1.0 – 1.1.7 | [v113/](v113/README.md) | 113 | complete — transport, batching, data types, all 93 packet IDs and full packet layouts |
+| MCPE 1.1.0 – 1.1.7 | [v113/](v113/README.md) | 113 | complete — transport, batching, data types, all 93 packet IDs with full layouts for every documented wire payload |
