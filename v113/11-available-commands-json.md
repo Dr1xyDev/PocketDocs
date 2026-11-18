@@ -5,7 +5,7 @@
 | Field | Type |
 |-------|------|
 | Commands JSON | String |
-| Unknown | String (always `""` in practice) |
+| Unknown | String — always `""` (never set by the reference implementation; still a real wire field that is decoded and re-encoded) |
 
 The JSON in protocol 113 is an **object keyed by command name**, where each command exposes exactly one *version* entry:
 

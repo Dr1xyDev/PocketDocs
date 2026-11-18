@@ -61,7 +61,7 @@ FE                                  batch
   78 9C ...                         zlib header + deflated body
   inflated:
     08  (UnsignedVarInt)            length = 8 bytes
-    09 01 06 44 72 31 78 79         sub-packet 0x09 TextPacket (chat, source "Dr1xy")
+    09 00 05 44 72 31 78 79         sub-packet 0x09 TextPacket (type raw, text "Dr1xy")
     03  (UnsignedVarInt)            length = 3 bytes
     21 04 00                        sub-packet 0x21 InteractPacket (action 4, target 0)
 ```

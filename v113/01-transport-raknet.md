@@ -101,7 +101,7 @@ The client sends several probes at decreasing sizes; the largest that fits is ch
 | Server GUID | Long, BE |
 | Client address | Address structure |
 | MTU size | Short, BE |
-| Encryption enabled | Byte (`0`) |
+| Has security | Byte (`0`) |
 
 ### Connection Request (`0x09`) — C2S (inside a session)
 

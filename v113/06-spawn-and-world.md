@@ -14,7 +14,7 @@ The single most important spawn packet; sent once, before chunks:
 | 4–6 | Player position | 3 × `LFloat` | x, y (feet + eye offset), z |
 | 7 | Pitch | `LFloat` | |
 | 8 | Yaw | `LFloat` | |
-| 9 | World seed | `VarInt` | usually `-1` from third-party servers |
+| 9 | World seed | `VarInt` | always `-1` (hardcoded by the reference implementation) |
 | 10 | Dimension | `VarInt` | 0 overworld, 1 nether, 2 end |
 | 11 | World generator | `VarInt` | 0 old/infinite-legacy, 1 infinite, 2 flat |
 | 12 | World gamemode | `VarInt` | default gamemode of the world |
@@ -28,9 +28,9 @@ The single most important spawn packet; sent once, before chunks:
 | 22 | Commands enabled | `Bool` | |
 | 23 | Texture packs required | `Bool` | |
 | 24 | Game rules | GameRules | see [03](03-data-types.md#game-rules) |
-| 25 | Level ID | String | usually `""` |
+| 25 | Level ID | String | the level's numeric ID as a string on the reference implementation (e.g. `"1"`); some implementations send `""` |
 | 26 | World name | String | shown above the hotbar |
-| 27 | Premium world template ID | String | usually `""` |
+| 27 | Premium world template ID | String | always `""` in the reference implementation |
 
 ## Player state packets
 

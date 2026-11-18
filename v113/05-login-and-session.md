@@ -89,7 +89,7 @@ Claims the client puts in the client-data JWT (all optional in practice):
 
 **DeviceOS values** (as encoded by 1.1.x-era clients): `-1` unknown, `1` Android, `2` iOS, `3` macOS/OSX, `4` Amazon FireOS, `5` Gear VR, `6` HoloLens, `7` Windows 10 (UWP), `8` Windows 32-bit, `9` Dedicated, `10` tvOS, `11` PlayStation, `12` Nintendo, `13` Xbox, `14` Windows Phone. (Values ≥ 9 are not produced by 1.1.x clients; they are listed for completeness.)
 
-> Note on claim interpretation: era server implementations parse these claims but only *act* on `ClientRandomId`, `ServerAddress`, `SkinId`, `SkinData`, `LanguageCode`, `DeviceOS` and the input-mode values; `XUID`, `titleId`, `SkinImageWidth`/`SkinImageHeight`, `UIProfile`, `GuiScale`, `TenantId`, `GameVersion` and `ADRole` are client-side conventions carried through uninterpreted.
+> Note on claim interpretation: the reference implementation parses these claims but only *acts* on `ClientRandomId` (client-ID ban checks), `SkinId`/`SkinData` (skin handling), `DeviceOS` and `DeviceModel` (platform gating). `ServerAddress`, `LanguageCode` and the input-mode values are parsed and stored but never consumed by it. The rest (`UIProfile`, `GuiScale`, `TenantId`, `GameVersion`, `ADRole`, and the chain-claim `XUID`/`titleId`) are client-side conventions carried through uninterpreted.
 
 There are **no further fields after the client-data JWT** in protocol 113 — username, UUID and skin all come from the JWTs.
 
@@ -184,7 +184,7 @@ Each entry:
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Must accept | `Bool` | servers typically send `false` (forcing true makes the client drop its own local packs) |
+| Must accept | `Bool` | reference default `false` (config `force_resources`); forcing `true` makes the client drop its own local packs |
 | Behavior stack count | `UnsignedVarInt` | |
 | Behavior stack entries | String pack ID, String version — per entry | |
 | Resource stack count | `UnsignedVarInt` | |

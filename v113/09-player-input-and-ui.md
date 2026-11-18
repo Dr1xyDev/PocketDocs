@@ -31,7 +31,7 @@ The client→server gameplay surface (the "client protocol" core) plus the serve
 | 15 | `START_GLIDE` | elytra glide start |
 | 16 | `STOP_GLIDE` | elytra glide end |
 | 17 | `BUILD_DENIED` | server denied placement (client echoes) |
-| 18 | `CONTINUE_BREAK` | mining continues (used with `LEVEL_SOUND_EVENT`) |
+| 18 | `CONTINUE_BREAK` | mining continues (the reference broadcasts a `LEVEL_EVENT` particle for it) |
 
 **RemoveBlockPacket (`0x15`) — C2S**
 
@@ -56,7 +56,7 @@ Riding/boat input:
 |-------|------|
 | Motion X | `LFloat` (strafe input, -1..1) |
 | Motion Y | `LFloat` (forward input, -1..1) |
-| Jumping flag | `Bool` |
+| Jumping flag | `Bool` (conventional name; the reference reads both Bools as unknown) |
 | Unknown flag | `Bool` |
 
 **RiderJumpPacket (`0x14`) — C2S** — see [07](07-entities.md).
@@ -113,7 +113,7 @@ The 1.1 command packet — the client sends the raw command line it wants execut
 | Field | Type |
 |-------|------|
 | Commands JSON | String |
-| Unknown | String (usually `""`) |
+| Unknown | String — always `""`; never set by the reference implementation |
 
 In protocol 113 the command list is still a **JSON blob** (the binary command enumeration came in later versions): an object keyed by command name, each with a `versions` array containing `aliases`, `description`, `overloads` and `permission`. The full schema is documented in [11-available-commands-json.md](11-available-commands-json.md).
 
@@ -123,8 +123,8 @@ In protocol 113 the command list is still a **JSON blob** (the binary command en
 |-------|------|-------|
 | Is block | `Bool` | false = minecart command block |
 | Block position | BlockPosition | when is block |
-| Mode | `UnsignedVarInt` | 0 sequential, 1 auto, 2 loop |
-| Redstone mode | `Bool` | false = always active |
+| Mode | `UnsignedVarInt` | conventional labels: 0 sequential/impulse, 1 auto/repeat, 2 loop/chain — values carry no meaning to the reference server |
+| Redstone mode | `Bool` | conventional: false = always active |
 | Conditional | `Bool` | when is block |
 | Minecart entity ID | `VarInt` | when not block |
 | Command | String | |
@@ -156,7 +156,7 @@ Flag bits:
 | 9 | is flying |
 | 10 | muted |
 
-(Bit 4 is unused.) Clients send this to announce their own flight/sprint capability state; servers send it to grant permissions, and treat client announcements as advisory (the server state wins on conflict).
+(Bit 4 is unused.) Clients send this to announce their own state; the reference server acts on two announced bits — **flying (bit 9)**, which is reverted when `allowFlight` is false (server state wins, settings re-sent), and **no-clip (bit 7)**, which is *enforced*: announcing it without permission gets the client kicked. Everything else is advisory.
 
 ## View radius
 
@@ -189,7 +189,7 @@ Flag bits:
 | Entity count + entity IDs | `UnsignedVarInt` + count × `VarInt` | only when `0x08` |
 | Scale | `Byte` | when `0x02` or `0x04` |
 | Decoration count | `UnsignedVarInt` | only when `0x04` |
-| Decorations | count × {`VarInt` packed (rotation low nibble, image high nibble), `Byte` x offset, `Byte` y offset, String label, `LInt` ARGB color} | |
+| Decorations | count × {`VarInt` packed (rotation low nibble, image high nibble), `Byte` x offset, `Byte` y offset, String label, `LInt` color} | the reference reads the color as ARGB but writes it as ABGR on encode (red/blue swapped on round-trip — an era inconsistency); vanilla side unconfirmable |
 | Width, Height, X offset, Y offset | 4 × `VarInt` | only when `0x02` |
 | Colors | width × height × `UnsignedVarInt` | row-major ABGR int per pixel |
 
@@ -199,7 +199,7 @@ Flag bits:
 
 | Field | Type |
 |-------|------|
-| Entity runtime ID | `VarInt` |
+| Entity runtime ID | `UnsignedVarLong` (likely) — the reference's accessor for this field (`putEntityRuntimeId`) is missing from its codebase, so the width is unverifiable; treat as a caveat |
 | Event data | `VarInt` |
 | Type | `Byte` (0 achievement awarded, 1 entity interact, 2 portal built, 3 portal used, 4 mob killed, 5 cauldron used, 6 player death, 7 boss killed, 8 agent command, 9 agent created) |
 
@@ -241,8 +241,8 @@ Flag bits:
 |-------|------|-------|
 | Window ID | `Byte` | |
 | Window type | `Byte` | hardcoded `15` (`TRADING`) by vanilla |
-| Unknown 1 | `VarInt` | no documented meaning in 1.1 |
-| Unknown 2 | `VarInt` | no documented meaning in 1.1 |
+| Unknown 1 | `VarInt` | no documented meaning in 1.1; the reference sends `0` |
+| Unknown 2 | `VarInt` | no documented meaning in 1.1; the reference sends `0` |
 | Is willing | `Bool` | villager willingness |
 | Trader entity ID | `VarInt` | |
 | Player entity ID | `VarInt` | |
