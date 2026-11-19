@@ -144,7 +144,7 @@ Each **sub-chunk section** is:
 | Block ID | `UnsignedVarInt` | |
 | Meta + flags | `UnsignedVarInt` | packed `meta & 0x0F`, flags in the upper 4 bits |
 
-Flag bits: `0b0001` neighbors, `0b0010` network, `0b0100` no-graphic, `0b1000` priority. The client applies the block visually when the network flag (`0b0010`) is set. The reference implementation sends `0x30 | meta` (all flags) or `0xB0 | meta` (all flags + priority); vanilla clients commonly send `0x20 | meta` (network flag only).
+Flag bits: `0b0001` neighbors, `0b0010` network, `0b0100` no-graphic, `0b1000` priority. The client applies the block visually when the network flag (`0b0010`) is set. The reference implementation sends `0x30 | meta` (neighbors + network) or `0xB0 | meta` (neighbors + network + priority); vanilla clients commonly send `0x20 | meta` (network flag only).
 
 ### BlockEventPacket (`0x1b`) — S2C
 

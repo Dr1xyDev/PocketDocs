@@ -75,7 +75,7 @@ Claims the client puts in the client-data JWT (all optional in practice):
 | `ServerAddress` | String | `host:port` the client is connecting to |
 | `SkinId` | String | skin identifier string |
 | `SkinData` | String | base64 of raw skin image bytes (64×64 RGBA = 16384 bytes, or 64×32 = 8192 for legacy) |
-| `SkinImageWidth` / `SkinImageHeight` | Int | skin dimensions (present in 1.1 builds) |
+| `SkinImageWidth` / `SkinImageHeight` | Int | skin dimensions (present in 1.1 builds) — **not read by the reference implementation at all** |
 | `LanguageCode` | String | e.g. `en_US` |
 | `DeviceModel` | String | device model string |
 | `DeviceOS` | Int | platform — see table below |
@@ -89,7 +89,7 @@ Claims the client puts in the client-data JWT (all optional in practice):
 
 **DeviceOS values** (as encoded by 1.1.x-era clients): `-1` unknown, `1` Android, `2` iOS, `3` macOS/OSX, `4` Amazon FireOS, `5` Gear VR, `6` HoloLens, `7` Windows 10 (UWP), `8` Windows 32-bit, `9` Dedicated, `10` tvOS, `11` PlayStation, `12` Nintendo, `13` Xbox, `14` Windows Phone. (Values ≥ 9 are not produced by 1.1.x clients; they are listed for completeness.)
 
-> Note on claim interpretation: the reference implementation parses these claims but only *acts* on `ClientRandomId` (client-ID ban checks), `SkinId`/`SkinData` (skin handling), `DeviceOS` and `DeviceModel` (platform gating). `ServerAddress`, `LanguageCode` and the input-mode values are parsed and stored but never consumed by it. The rest (`UIProfile`, `GuiScale`, `TenantId`, `GameVersion`, `ADRole`, and the chain-claim `XUID`/`titleId`) are client-side conventions carried through uninterpreted.
+> Note on claim interpretation: the reference implementation parses 14 client-data claims but only *acts* on `ClientRandomId` (client-ID ban checks), `SkinId`/`SkinData` (skin handling), `DeviceOS` and `DeviceModel` (platform gating). `ServerAddress`, `LanguageCode`, the input-mode values and `GuiScale` are parsed and stored but never consumed by it. `SkinImageWidth`/`SkinImageHeight` are never read at all, and `UIProfile`, `TenantId`, `GameVersion`, `ADRole` are parsed into the packet object only. The chain-token `XUID`/`titleId` keys are likewise never read by the reference (client-side conventions).
 
 There are **no further fields after the client-data JWT** in protocol 113 — username, UUID and skin all come from the JWTs.
 
@@ -97,7 +97,7 @@ There are **no further fields after the client-data JWT** in protocol 113 — us
 
 The 1.1-era scheme:
 
-1. Server generates an ephemeral **ECDH key pair on secp384r1** and a random 16-byte salt/token.
+1. Server generates an **ECDH key pair on secp384r1** — created once per server process and reused for every session (not per-connection ephemeral) — plus a random 16-byte salt/token.
 2. Server sends **`0x03 ServerToClientHandshake`** — sent *unencrypted*, immediately before enabling its cipher.
 3. Client derives: shared secret = ECDH(client's `identityPublicKey` private counterpart, server public key); encryption key = **SHA-256(salt ‖ shared-secret)** (salt first).
 4. Client replies **`0x04 ClientToServerHandshake`** and enables its cipher; upon receiving `0x04`, the server continues the login sequence.
