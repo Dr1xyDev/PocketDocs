@@ -156,7 +156,7 @@ Flag bits:
 | 9 | is flying |
 | 10 | muted |
 
-(Bit 4 is unused.) Clients send this to announce their own state; the reference server routes announced **flying (bit 9)** and **no-clip (bit 7)** without permission through the same cheat-handling path, which cancels the flight toggle and re-sends the server's settings (server state wins). A dedicated no-clip kick branch exists in the source but is unreachable dead code — in practice nothing beyond the revert is enforced. Everything else is advisory.
+(Bit 4 is unused.) Clients send this to announce their own state; the reference server routes announced **flying (bit 9)** and **no-clip (bit 7)** without permission through the same cheat-handling path, which cancels the flight toggle (server state wins; the settings packet is re-sent when the packet announces flying or a plugin cancels the toggle). A dedicated no-clip kick branch exists in the source but is unreachable dead code — in practice nothing beyond the revert is enforced. Everything else is advisory.
 
 ## View radius
 

@@ -74,7 +74,7 @@ The single most reused structure in the protocol. All items in inventories, enti
 | Item ID | `VarInt` (zigzag) | `0` = empty item; **an `id ≤ 0` value ends the slot** (a negative zigzag value terminates too — no further fields) |
 | Aux value | `VarInt` (zigzag) | packed: `(damage & 0x7FFF) << 8 \| (count & 0xFF)` — low byte is the stack **count**, upper 15 bits the item **damage/meta**; `0x7FFF` damage means "any damage" |
 | NBT length | `LShort` | byte length of the NBT blob |
-| NBT data | *nbtLen* bytes | little-endian NBT, network flavor, only if `nbtLen > 0` |
+| NBT data | *nbtLen* bytes | little-endian NBT, **plain** flavor (see [NBT](#nbt)), only if `nbtLen > 0` |
 | CanPlaceOn count | `VarInt` | number of block identifiers following |
 | CanPlaceOn entries | count × String | |
 | CanDestroy count | `VarInt` | number of block identifiers following |
@@ -130,7 +130,7 @@ Rules used by 1.1 servers include `naturalregeneration` (Bool) and `experimental
 
 All NBT on the 113 wire is **little-endian**, in two flavors:
 
-* **Network flavor** — block entities (`BlockEntityDataPacket`), tile spawn compounds (appended back-to-back to chunk data by `FullChunkDataPacket`), trade offers (`UpdateTradePacket`) and equip contents (`UpdateEquipPacket`, which sends the remainder of the packet as one compound): tag type `Byte`, **name length `UnsignedVarInt`**, name UTF-8, payload — with `IntTag` as `VarInt`, `LongTag` as `VarLong`, string values and list counts VarInt-prefixed as well. `BlockEntityDataPacket` sends the compound raw (no length prefix).
-* **Plain little-endian flavor** — item NBT inside Slots only: name length `LShort` (the same `LShort` that length-prefixes the NBT inside the Slot, see [08](08-inventory-and-items.md)), `IntTag`/`LongTag` as fixed-width `LInt`/`LLong`.
+* **Network flavor** — block entities (`BlockEntityDataPacket`), tile spawn compounds (appended back-to-back to chunk data by `FullChunkDataPacket`), trade offers (`UpdateTradePacket`) and equip contents (`UpdateEquipPacket`, which sends the remainder of the packet as one compound): tag type `Byte`, **name length `UnsignedVarInt`**, name UTF-8, payload — with `IntTag` as `VarInt`, `LongTag` as `VarLong`, **string values `UnsignedVarInt`-prefixed** (plain LEB128 — a reader must *not* zigzag-decode them) and list counts `VarInt`-prefixed (zigzag). `BlockEntityDataPacket` sends the compound raw (no length prefix).
+* **Plain little-endian flavor** — item NBT inside Slots only: name length `LShort` (the Slot's `LShort` length prefix, see the Slot table above), `IntTag`/`LongTag` as fixed-width `LInt`/`LLong`.
 
 Compounds in both flavors end with a `TAG_End` (`0x00`) byte. Tag IDs `0x00`–`0x0b` exist in protocol 113 (no `LongArray`).

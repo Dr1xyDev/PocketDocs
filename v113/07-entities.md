@@ -266,8 +266,8 @@ Event constants: `1` JUMP, `2` HURT_ANIMATION, `3` DEATH_ANIMATION, `4` ARM_SWIN
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Rider (from) | `VarInt` | |
-| Vehicle (to) | `VarInt` | |
+| Vehicle (from) | `VarInt` | the ridden entity |
+| Rider (to) | `VarInt` | the passenger |
 | Link type | `Byte` | 0 remove, 1 ride, 2 passenger |
 
 **SetEntityDataPacket (`0x27`) — S2C**
@@ -292,7 +292,7 @@ Event constants: `1` JUMP, `2` HURT_ANIMATION, `3` DEATH_ANIMATION, `4` ARM_SWIN
 | Entry count | `UnsignedVarInt` |
 | Entries | action-dependent |
 
-Add entry: UUID, `VarInt` entity ID, String name, String skin ID, String skin data (base64).
+Add entry: UUID, `VarInt` entity ID, String name, String skin ID, String skin data (raw decoded skin bytes, **not** base64 — the client's base64 `SkinData` JWT claim is decoded before it is stored and re-sent here).
 Remove entry: UUID only.
 
 **BossEventPacket (`0x4c`) — Both**

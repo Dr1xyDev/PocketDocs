@@ -144,7 +144,7 @@ Each **sub-chunk section** is:
 | Block ID | `UnsignedVarInt` | |
 | Meta + flags | `UnsignedVarInt` | packed `meta & 0x0F`, flags in the upper 4 bits |
 
-Flag bits: `0b0001` neighbors, `0b0010` network, `0b0100` no-graphic, `0b1000` priority. The client applies the block visually when the network flag (`0b0010`) is set; a common combined value on the wire is `0x20 | meta`.
+Flag bits: `0b0001` neighbors, `0b0010` network, `0b0100` no-graphic, `0b1000` priority. The client applies the block visually when the network flag (`0b0010`) is set. The reference implementation sends `0x30 | meta` (all flags) or `0xB0 | meta` (all flags + priority); vanilla clients commonly send `0x20 | meta` (network flag only).
 
 ### BlockEventPacket (`0x1b`) — S2C
 
@@ -223,6 +223,8 @@ Event ID constants:
 | 3600/3601 | `EVENT_BLOCK_START_BREAK` / `EVENT_BLOCK_STOP_BREAK` | mining progress |
 | 4000 | `EVENT_SET_DATA` | legacy block data change |
 | 9800 | `EVENT_PLAYERS_SLEEPING` | all players sleeping |
+
+`0x4000` (`EVENT_ADD_PARTICLE_MASK`) is a bit-OR mask added to particle event IDs, not an event of its own.
 
 ## LevelSoundEventPacket (`0x19`) — Both
 
