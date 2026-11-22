@@ -108,7 +108,7 @@ Both `0x03` and `0x04` are sent/received *inside* `0xFE` batches; the first encr
 
 | Field | Type |
 |-------|------|
-| Public key | String — base64 DER of the server's ECDH public key (public half of the key pair created once per server process, see step 1 below) |
+| Public key | String — base64 DER of the server's ECDH public key (public half of the key pair created once per server process, see step 1 above) |
 | Server token | String — the **raw 16-byte salt** (varint length + raw bytes, *not* base64) used in key derivation |
 
 **ClientToServerHandshakePacket (`0x04`) — C2S**

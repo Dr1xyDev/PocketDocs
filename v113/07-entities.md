@@ -295,7 +295,7 @@ Event constants: `1` JUMP, `2` HURT_ANIMATION, `3` DEATH_ANIMATION, `4` ARM_SWIN
 Add entry: UUID, `VarInt` entity ID, String name, String skin ID, String skin data (raw decoded skin bytes, **not** base64 — the client's base64 `SkinData` JWT claim is decoded before it is stored and re-sent here).
 Remove entry: UUID only.
 
-**BossEventPacket (`0x4c`) — Both**
+**BossEventPacket (`0x4c`) — S2C** (the reference server never handles a client-sent BossEvent; the `REGISTER_PLAYER`/`UNREGISTER_PLAYER` types are enum values vanilla clients send, with no handler case here)
 
 | Field | Type |
 |-------|------|

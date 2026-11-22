@@ -50,7 +50,7 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 | 44 | `0x2c` | AnimatePacket | Both | [09](09-player-input-and-ui.md) |
 | 45 | `0x2d` | RespawnPacket | S2C | [06](06-spawn-and-world.md) |
 | 46 | `0x2e` | DropItemPacket | C2S | [08](08-inventory-and-items.md) |
-| 47 | `0x2f` | InventoryActionPacket | Both (legacy/compat; see notes) | [08](08-inventory-and-items.md) |
+| 47 | `0x2f` | InventoryActionPacket | Both (legacy/compat; neither half exercised by the reference — see notes) | [08](08-inventory-and-items.md) |
 | 48 | `0x30` | ContainerOpenPacket | S2C | [08](08-inventory-and-items.md) |
 | 49 | `0x31` | ContainerClosePacket | Both | [08](08-inventory-and-items.md) |
 | 50 | `0x32` | ContainerSetSlotPacket | Both | [08](08-inventory-and-items.md) |
@@ -65,7 +65,7 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 | 59 | `0x3b` | SetCommandsEnabledPacket | S2C | [06](06-spawn-and-world.md) |
 | 60 | `0x3c` | SetDifficultyPacket | S2C | [06](06-spawn-and-world.md) |
 | 61 | `0x3d` | ChangeDimensionPacket | S2C | [06](06-spawn-and-world.md) |
-| 62 | `0x3e` | SetPlayerGameTypePacket | Both | [09](09-player-input-and-ui.md) |
+| 62 | `0x3e` | SetPlayerGameTypePacket | Both | [06](06-spawn-and-world.md) |
 | 63 | `0x3f` | PlayerListPacket | S2C | [07](07-entities.md) |
 | 64 | `0x40` | SimpleEventPacket | reserved — defined in the registry, **no wire payload documented for 1.1** | — |
 | 65 | `0x41` | EventPacket | S2C | [09](09-player-input-and-ui.md) |
@@ -79,7 +79,7 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 | 73 | `0x49` | GameRulesChangedPacket | S2C | [06](06-spawn-and-world.md) |
 | 74 | `0x4a` | CameraPacket | S2C | [06](06-spawn-and-world.md) |
 | 75 | `0x4b` | AddItemPacket | S2C | [07](07-entities.md) |
-| 76 | `0x4c` | BossEventPacket | Both | [07](07-entities.md) |
+| 76 | `0x4c` | BossEventPacket | S2C | [07](07-entities.md) |
 | 77 | `0x4d` | ShowCreditsPacket | S2C | [06](06-spawn-and-world.md) |
 | 78 | `0x4e` | AvailableCommandsPacket | S2C | [09](09-player-input-and-ui.md) |
 | 79 | `0x4f` | CommandStepPacket | C2S | [09](09-player-input-and-ui.md) |
@@ -101,6 +101,8 @@ Protocol 113 defines a **contiguous block of 93 game packet IDs, `0x01`–`0x5d`
 
 ## Notes on directions
 
-* Packets that travel C2S are the session/login set (`0x01` Login, `0x04` ClientToServerHandshake, `0x08` ResourcePackClientResponse, `0x55` ResourcePackChunkRequest) plus gameplay reports: `0x13` MovePlayer, `0x12` MoveEntity (driving a vehicle), `0x19` LevelSoundEvent, `0x1c` EntityEvent, `0x1f` MobEquipment, `0x20` MobArmorEquipment, `0x21` Interact, `0x23` UseItem, `0x24` PlayerAction, `0x15` RemoveBlock, `0x22` BlockPickRequest, `0x25` EntityFall, `0x14` RiderJump, `0x2c` Animate, `0x39` PlayerInput, `0x2e` DropItem, `0x2f` InventoryAction (legacy), `0x31` ContainerClose, `0x32` ContainerSetSlot, `0x36` CraftingEvent, `0x37` AdventureSettings, `0x38` BlockEntityData, `0x3e` SetPlayerGameType, `0x4c` BossEvent (register/unregister), `0x50` CommandBlockUpdate, `0x09` Text, `0x4f` CommandStep, `0x44` MapInfoRequest, `0x45` RequestChunkRadius, `0x47` ItemFrameDropItem. The `0xFE` Batch wrapper travels in both directions. Everything else in the registry is server→client.
+* Packets that travel C2S are the session/login set (`0x01` Login, `0x04` ClientToServerHandshake, `0x08` ResourcePackClientResponse, `0x55` ResourcePackChunkRequest) plus gameplay reports: `0x13` MovePlayer, `0x12` MoveEntity (driving a vehicle), `0x19` LevelSoundEvent, `0x1c` EntityEvent, `0x1f` MobEquipment, `0x20` MobArmorEquipment, `0x21` Interact, `0x23` UseItem, `0x24` PlayerAction, `0x15` RemoveBlock, `0x22` BlockPickRequest, `0x25` EntityFall, `0x14` RiderJump, `0x2c` Animate, `0x39` PlayerInput, `0x2e` DropItem, `0x2f` InventoryAction (legacy), `0x31` ContainerClose, `0x32` ContainerSetSlot, `0x36` CraftingEvent, `0x37` AdventureSettings, `0x38` BlockEntityData, `0x3e` SetPlayerGameType, `0x50` CommandBlockUpdate, `0x09` Text, `0x4f` CommandStep, `0x44` MapInfoRequest, `0x45` RequestChunkRadius, `0x47` ItemFrameDropItem. The `0xFE` Batch wrapper travels in both directions. Everything else in the registry is server→client.
 * Both directions are documented for every packet regardless, since proxies and third-party clients need both.
-* `InventoryActionPacket` (`0x2f`) with actions *give item* (0) / *enchant item* (2) is a compatibility leftover from the pre-1.0 era; stock 1.1.x clients drive inventory changes through `ContainerSetSlotPacket` instead (see [08](08-inventory-and-items.md)).
+* `InventoryActionPacket` (`0x2f`) with actions *give item* (0) / *enchant item* (2) is a compatibility leftover from the pre-1.0 era; stock 1.1.x clients drive inventory changes through `ContainerSetSlotPacket` instead (see [08](08-inventory-and-items.md)). The reference implementation neither handles nor sends it — decode and encode are both populated, but it has no handler case and no send sites.
+* `0x14` RiderJump, `0x22` BlockPickRequest, `0x25` EntityFall and `0x50` CommandBlockUpdate are decoded by the packet classes but have no handler case in the reference server — decoded then ignored. `0x44` MapInfoRequest's handler body is commented out and `0x39` PlayerInput's is a `TODO` stub; `0x20` MobArmorEquipment's C2S case is an empty `break`.
+* S2C classes `0x10` AddHangingEntity, `0x26` HurtArmor, `0x2a` SetHealth, `0x3b` SetCommandsEnabled, `0x41` Event, `0x42` SpawnExperienceOrb, `0x48` ReplaceItemInSlot, `0x49` GameRulesChanged, `0x4a` Camera, `0x4b` AddItem, `0x4d` ShowCredits and `0x58` StopSound are never sent by the reference implementation — their layouts are documented from the class definitions alone (`0x41`, `0x42` and `0x49` are also absent from the packet pool).
