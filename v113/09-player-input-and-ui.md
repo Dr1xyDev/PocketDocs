@@ -17,7 +17,7 @@ The client→server gameplay surface (the "client protocol" core) plus the serve
 |------:|--------|-------|
 | 0 | `START_BREAK` | begin mining |
 | 1 | `ABORT_BREAK` | stop mining, no break |
-| 2 | `STOP_BREAK` | finish mining tick |
+| 2 | `STOP_BREAK` | revert-mining broadcast, same as `ABORT_BREAK` (actual block removal is the separate `0x15` RemoveBlock packet) |
 | 5 | `RELEASE_ITEM` | release bow/food/projectile |
 | 6 | `STOP_SLEEPING` | leave bed |
 | 7 | `SPAWN_SAME_DIMENSION` | respawn ready (same dimension) |
@@ -26,11 +26,11 @@ The client→server gameplay surface (the "client protocol" core) plus the serve
 | 10 | `STOP_SPRINT` | |
 | 11 | `START_SNEAK` | |
 | 12 | `STOP_SNEAK` | |
-| 13 | `SPAWN_OVERWORLD` | respawn into overworld (dimension change) |
+| 13 | `SPAWN_OVERWORLD` | plain respawn, handled identically to `SPAWN_SAME_DIMENSION` (no dimension-change logic — only `SPAWN_NETHER` touches that path) |
 | 14 | `SPAWN_NETHER` | respawn into nether (dimension change) |
 | 15 | `START_GLIDE` | elytra glide start |
 | 16 | `STOP_GLIDE` | elytra glide end |
-| 17 | `BUILD_DENIED` | server denied placement (client echoes) |
+| 17 | `BUILD_DENIED` | server denied placement (client echoes; unhandled by the reference — falls through to its `assert` default) |
 | 18 | `CONTINUE_BREAK` | mining continues (the reference broadcasts a `LEVEL_EVENT` particle for it) |
 
 **RemoveBlockPacket (`0x15`) — C2S**
@@ -156,7 +156,7 @@ Flag bits:
 | 9 | is flying |
 | 10 | muted |
 
-(Bit 4 is unused.) Clients send this to announce their own state; the reference server routes announced **flying (bit 9)** and **no-clip (bit 7)** without permission through the same cheat-handling path, which cancels the flight toggle (server state wins; the settings packet is re-sent when the packet announces flying or a plugin cancels the toggle). A dedicated no-clip kick branch exists in the source but is unreachable dead code — in practice nothing beyond the revert is enforced. Everything else is advisory.
+(Bit 4 is unused.) Clients send this to announce their own state; the reference server routes announced **flying (bit 9)** and **no-clip (bit 7)** without permission through the same cheat-handling path, which fires the flight-toggle event (server state wins; the settings packet is re-sent only when that event is cancelled — automatically when flying is announced without allow-flight, or by a plugin). A dedicated no-clip kick branch exists in the source but is unreachable dead code — in practice nothing beyond the revert is enforced. Everything else is advisory.
 
 ## View radius
 
@@ -240,7 +240,7 @@ Flag bits:
 | Field | Type | Notes |
 |-------|------|-------|
 | Window ID | `Byte` | |
-| Window type | `Byte` | hardcoded `15` (`TRADING`) by vanilla |
+| Window type | `Byte` | vanilla hardcodes `15` (`TRADING`); the reference never sets the property and therefore sends `0` |
 | Unknown 1 | `VarInt` | no documented meaning in 1.1; the reference sends `0` |
 | Unknown 2 | `VarInt` | no documented meaning in 1.1; the reference sends `0` |
 | Is willing | `Bool` | villager willingness |
@@ -257,4 +257,4 @@ Flag bits:
 | Window type | `Byte` | |
 | Unknown | `VarInt` | vanilla sends 0 |
 | Entity unique ID | `VarInt` | |
-| Equipment NBT | raw bytes | little-endian compound (rest of packet) |
+| Equipment NBT | raw bytes | little-endian **network-flavor** NBT compound (rest of packet) |
