@@ -240,14 +240,16 @@ Flag bits:
 | Field | Type | Notes |
 |-------|------|-------|
 | Window ID | `Byte` | |
-| Window type | `Byte` | vanilla hardcodes `15` (`TRADING`); the reference never sets the property and therefore sends `0` |
-| Unknown 1 | `VarInt` | no documented meaning in 1.1; the reference sends `0` |
-| Unknown 2 | `VarInt` | no documented meaning in 1.1; the reference sends `0` |
+| Window type | `Byte` | vanilla hardcodes `15` (`TRADING`); the reference never assigns it either, so the class default `15` would go out — not `0` |
+| Unknown 1 | `VarInt` | no documented meaning in 1.1; the reference's send path assigns `0` |
+| Unknown 2 | `VarInt` | no documented meaning in 1.1; the reference's send path assigns `0` |
 | Is willing | `Bool` | villager willingness |
 | Trader entity ID | `VarInt` | |
 | Player entity ID | `VarInt` | |
 | Display name | String | trader name |
 | Offers | raw bytes | little-endian **network-flavor** NBT compound with `Recipes` list (see [03](03-data-types.md#nbt)) |
+
+The reference never actually sends this packet — its only `VillagerTradeInventory` instantiation is commented out in `entity/passive/Villager.php` — so the send-path values above are hypothetical.
 
 **UpdateEquipPacket (`0x52`) — S2C**
 
