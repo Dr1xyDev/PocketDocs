@@ -83,10 +83,10 @@ The single most important spawn packet; sent once, before chunks:
 | Field | Type | Notes |
 |-------|------|-------|
 | Dimension | `VarInt` | 0/1/2 |
-| Position | 3 × `LFloat` | spawn point in the new dimension |
+| Position | 3 × `LFloat` | player position in the new dimension (×8/÷8 scaled between overworld and nether) |
 | Respawn | `Bool` | |
 
-The client answers the dimension change with `0x24 PlayerAction` actions 13 (`SPAWN_OVERWORLD`), 14 (`SPAWN_NETHER`) or the end equivalent via action 7 (`SPAWN_SAME_DIMENSION`).
+The client answers the dimension change with `0x24 PlayerAction` actions 13 (`SPAWN_OVERWORLD`), 14 (`SPAWN_NETHER`) or 7 (`SPAWN_SAME_DIMENSION`) — in the reference, 7 and 13 route to the respawn path, while 14's dimension-confirmation branch is dead code (its `awaitingDimensionChange` flag is only ever set by a commented-out block).
 
 **ShowCreditsPacket (`0x4d`) — S2C**
 
@@ -202,7 +202,7 @@ Event ID constants:
 | 1040–1044 | `EVENT_SOUND_ITEMFRAME_*` | item frame add/remove/place/rotate |
 | 1050 | `EVENT_SOUND_CAMERA` | camera |
 | 1051 | `EVENT_SOUND_ORB` | XP orb pickup |
-| 1052 | `EVENT_SOUND_TOTEM` | totem (unused in 1.1) |
+| 1052 | `EVENT_SOUND_TOTEM` | totem (the reference broadcasts it on totem use) |
 | 2000 | `EVENT_PARTICLE_SHOOT` | shoot particles |
 | 2001 | `EVENT_PARTICLE_DESTROY` | block break particles |
 | 2002 | `EVENT_PARTICLE_SPLASH` | splash potion |
