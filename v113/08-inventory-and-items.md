@@ -1,6 +1,6 @@
 # 08 — Inventory, containers and items
 
-Window management, item movement, crafting and item drops. Types: [03-data-types.md](03-data-types.md); the Slot structure defined there is used by almost every packet here.
+Window management, item movement, crafting and item drops. Types: [03-data-types.md](03-data-types.md); the Slot structure defined there is used by almost every packet here. Field glosses on fields the reference never reads or writes (e.g. DropItem's type byte, Interact action 6, ContainerSetSlot's hotbar fields) describe vanilla-era semantics that the reference does not exercise.
 
 ## Window / container IDs
 
@@ -188,9 +188,9 @@ Client reports it performed a crafting-grid recipe:
 | Recipe type | `VarInt` |
 | Recipe ID | UUID |
 | Input size | `UnsignedVarInt` |
-| Input items | count × Slot |
+| Input items | count × Slot | the reference's decode reads at most 128 entries |
 | Output size | `UnsignedVarInt` |
-| Output items | count × Slot |
+| Output items | count × Slot | the reference's decode reads at most 128 entries |
 
 **InventoryActionPacket (`0x2f`) — Both (legacy)**
 
