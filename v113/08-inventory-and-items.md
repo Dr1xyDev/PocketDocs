@@ -1,6 +1,6 @@
 # 08 — Inventory, containers and items
 
-Window management, item movement, crafting and item drops. Types: [03-data-types.md](03-data-types.md); the Slot structure defined there is used by almost every packet here. Field glosses on fields the reference never reads or writes (e.g. DropItem's type byte, Interact action 6, ContainerSetSlot's hotbar fields) describe vanilla-era semantics that the reference does not exercise.
+Window management, item movement, crafting and item drops. Types: [03-data-types.md](03-data-types.md); the Slot structure defined there is used by almost every packet here. Field glosses on fields the reference never reads or writes (e.g. DropItem's type byte, ContainerSetSlot's hotbar fields) describe vanilla-era semantics that the reference does not exercise.
 
 ## Window / container IDs
 
@@ -75,6 +75,8 @@ Special window IDs used in place of a real container id when addressing player i
 |-------|------|-------|
 | Action | `Byte` | 1 right-click, 2 left-click (attack/damage), 3 leave vehicle, 4 mouse-over (hover), 6 open inventory |
 | Target entity ID | `VarInt` | entity acted upon; action 6 carries the entity whose inventory is opened (e.g. a horse) |
+
+The reference exercises action 6 only for horse targets: its `InteractPacketHandler` opens the horse's inventory window and consumes the packet; every other action/target combination falls through to the main switch, where only left-click (2) does anything.
 
 **UseItemPacket (`0x23`) — C2S**
 
@@ -182,14 +184,14 @@ Recipe UUIDs are transmitted via the UUID type (two LE longs, see [03](03-data-t
 
 Client reports it performed a crafting-grid recipe:
 
-| Field | Type |
-|-------|------|
-| Window ID | `Byte` |
-| Recipe type | `VarInt` |
-| Recipe ID | UUID |
-| Input size | `UnsignedVarInt` |
+| Field | Type | Notes |
+|-------|------|-------|
+| Window ID | `Byte` | |
+| Recipe type | `VarInt` | |
+| Recipe ID | UUID | |
+| Input size | `UnsignedVarInt` | |
 | Input items | count × Slot | the reference's decode reads at most 128 entries |
-| Output size | `UnsignedVarInt` |
+| Output size | `UnsignedVarInt` | |
 | Output items | count × Slot | the reference's decode reads at most 128 entries |
 
 **InventoryActionPacket (`0x2f`) — Both (legacy)**

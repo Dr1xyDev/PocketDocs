@@ -1,6 +1,6 @@
 # 10 — Legacy entity type IDs
 
-`AddEntityPacket` (`0x0d`, see [07-entities.md](07-entities.md)) identifies the entity with a single **legacy numeric ID** in its `type` field (`UnsignedVarInt`). These are the Mojang-era Pocket Edition numeric IDs; they are also what older plugins and level formats use. The table below is the complete set for protocol 113.
+`AddEntityPacket` (`0x0d`, see [07-entities.md](07-entities.md)) identifies the entity with a single **legacy numeric ID** in its `type` field (`UnsignedVarInt`). These are the Mojang-era Pocket Edition numeric IDs; they are also what older plugins (and legacy Mojang-era level formats) use. The table below is the complete set for protocol 113.
 
 | ID | Entity | ID | Entity |
 |---:|--------|---:|--------|
@@ -34,7 +34,7 @@
 | 37 | Slime | 82 | Egg |
 | 38 | Enderman | 83 | Painting |
 | 39 | Silverfish | 84 | Minecart |
-| 40 | Cave Spider | 85 | Large Fireball (ghast fireball) |
+| 40 | Cave Spider | 85 | Large Fireball (vanilla: ghast fireball) |
 | 41 | Ghast | 86 | Splash Potion (aka Thrown Potion) |
 | 42 | Magma Cube | 87 | Ender Pearl |
 | 43 | Blaze | 88 | Leash Knot |
@@ -43,7 +43,7 @@
 | 46 | Stray | 91 | Wither Skull Dangerous (blue) |
 | 47 | Husk | 92 | *unused* |
 | 48 | Wither Skeleton | 93 | Lightning Bolt |
-| 49 | Guardian | 94 | Small Fireball (blaze fireball) |
+| 49 | Guardian | 94 | Small Fireball (vanilla: blaze fireball) |
 | 50 | Elder Guardian | 95 | Area Effect Cloud |
 
 | ID | Entity | ID | Entity |
@@ -59,4 +59,4 @@
 * **Players are never sent through `AddEntityPacket`** — they use `AddPlayerPacket` (`0x0c`). The `63` (Player) type exists in the ID space but is not sent for remote players in protocol 113.
 * Dropped items are spawned with `AddItemEntityPacket` (`0x0f`) rather than `AddEntityPacket` with type 64; type 64 is the same entity in the legacy ID space.
 * IDs 31, 58–60, 73–75, 92 and 99 are not assigned in protocol 113.
-* The `type` value is the *only* entity identity in `AddEntityPacket` — there are no string identifiers on the wire in protocol 113 (string-based identifiers arrived in later protocol versions).
+* The `type` value is the *only* entity identity in `AddEntityPacket` — there are no string entity identifiers on the wire in protocol 113 (string-based identifiers arrived in later protocol versions).
