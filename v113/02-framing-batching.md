@@ -66,4 +66,4 @@ FE                                  batch
     21 04 00                        sub-packet 0x21 InteractPacket (action 4, target 0)
 ```
 
-(Note: the reference server's receive path silently drops a `21 04 00` InteractPacket as a known mouseover-spam filter, so that exact sub-packet would never reach packet handlers.)
+(Note: the reference server consumes a `21 04 00` InteractPacket as a known mouseover-spam filter in its first-stage `InteractPacketHandler` — mouse-over is always consumed, and clearing the tag can still broadcast a metadata update — so that exact sub-packet never reaches Player.php's main switch.)

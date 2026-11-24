@@ -76,7 +76,7 @@ Special window IDs used in place of a real container id when addressing player i
 | Action | `Byte` | 1 right-click, 2 left-click (attack/damage), 3 leave vehicle, 4 mouse-over (hover), 6 open inventory |
 | Target entity ID | `VarInt` | entity acted upon; action 6 carries the entity whose inventory is opened (e.g. a horse) |
 
-The reference exercises action 6 only for horse targets: its `InteractPacketHandler` opens the horse's inventory window and consumes the packet; every other action/target combination falls through to the main switch, where only left-click (2) does anything.
+A first-stage `InteractPacketHandler` (runs before the main switch, with no spawned gate) consumes most actions: right-click (1) for any resolvable entity target — it fires `PlayerInteractEvent` and calls `onInteract` regardless of cancellation; mouse-over (4) always — it sets or clears the `DATA_INTERACTIVE_TAG` metadata (button text like "Feed"/"Ride"); leave-vehicle (3) when dismounting a ridden Horse/Vehicle; open-inventory (6) only for Horse targets. Only left-click (2) and unresolvable targets fall through to the main switch, where only left-click does anything.
 
 **UseItemPacket (`0x23`) — C2S**
 

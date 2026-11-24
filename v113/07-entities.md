@@ -36,7 +36,7 @@ Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entit
 | 37 | `DATA_POTION_AUX_VALUE` | Short | potion aux |
 | 38 | `DATA_LEAD_HOLDER_EID` | Long | lead holder |
 | 39 | `DATA_SCALE` | Float | entity scale (default 1) |
-| 40 | `DATA_INTERACTIVE_TAG` | String | button text ("Feed", "Ride"…) |
+| 40 | `DATA_INTERACTIVE_TAG` | String | button text ("Feed", "Ride"…) — set/cleared by Interact mouse-over (action 4) |
 | 41 | `DATA_NPC_SKIN_ID` | String | NPC skin |
 | 42 | `DATA_URL_TAG` | String | URL tag |
 | 43 | `DATA_MAX_AIR` | Short | max air ticks |
@@ -190,6 +190,8 @@ Known attribute name strings: `minecraft:absorption`, `minecraft:player.saturati
 | Yaw | ByteRotation |
 | On ground | `Bool` |
 | Teleported | `Bool` |
+
+The reference's only processing of the C2S copy is a first-stage `MoveEntityPacketHandler` (before the main switch, with no spawned gate): when the sender is the linked rider of a Horse/Vehicle, it applies x/y/z, yaw and pitch to the vehicle, resets the rider's fall distance and updates movement. It ignores `Head yaw`, `On ground` and `Teleported`, and copies from non-riders are silently dropped (there is no main-switch case).
 
 **MovePlayerPacket (`0x13`) — Both** (C2S is the player's own movement report; S2C teleports/corrections)
 
