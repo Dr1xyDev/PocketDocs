@@ -4,7 +4,7 @@ This directory documents the **client protocol of Minecraft: Pocket Edition 1.1.
 
 Everything here is reconstructed byte-by-byte from working protocol implementations of the era — primarily [Aquamarine-Team/Aquamarine](https://github.com/Aquamarine-Team/Aquamarine) (branch `stable`, a GenisysPro/PocketMine-MP lineage server that implements protocol 113 exactly), cross-checked against [GenisysPro/GenisysPro](https://github.com/GenisysPro/GenisysPro). Both repositories carry an **identical** packet ID table for protocol 113 (93 IDs, `0x01`–`0x5d`, verified by diff). Historical version numbers are taken from the Minecraft Wiki *Protocol version* list (mirrored on minecraft.fandom.com).
 
-**Scope:** this documentation covers only the **wire protocol that speaks with the client** — transport, framing, packet layouts and the client's side of every exchange. Server software internals (packet dispatch, anti-abuse limits, permission logic, implementation quirks) are intentionally out of scope; where a byte format was taken from server software, only the wire-visible part is documented.
+**Scope:** this documentation covers only the **wire protocol that speaks with the client** — transport, framing, packet layouts and the client's side of every exchange. Server software internals (anti-abuse limits, permission logic, implementation quirks) are intentionally out of scope; where a byte format was taken from server software, only the wire-visible part is documented. Exception: reference receive-path behaviour that determines whether a documented packet is acted on, dropped or relayed (first-stage dispatch handlers, batch-unpack limits, never-sent/never-handled classes) is noted in the text as reference-behaviour context, clearly separated from the wire format.
 
 ## Version ↔ protocol mapping
 
@@ -47,7 +47,7 @@ Protocol-113 implementations of the era declare `CURRENT_PROTOCOL = 113` with `M
 - `VarInt` (zigzag) / `UnsignedVarInt` (plain LEB128) etc. follow the naming of the reference implementation; see [03-data-types.md](03-data-types.md) for exact encodings.
 - Packet names use the reference implementation class names (`LoginPacket`, `StartGamePacket`, …), which match the names used by PocketMine/GenisysPro lineage servers.
 - Wire tables use: *offsets relative to the packet body*, *types as defined in 03-data-types.md*.
-- "Reference implementation" = Aquamarine `stable` (commit `47766f0`). It is cited only as the provenance of byte formats; its internal behaviour is not documented here.
+- "Reference implementation" = Aquamarine `stable` (commit `47766f0`). It is cited as the provenance of byte formats; its internal behaviour appears only as marked reference-behaviour notes where it determines how a documented packet is processed on receive (02, 04, 07, 08, 09).
 
 ## Sources
 
@@ -55,4 +55,4 @@ Protocol-113 implementations of the era declare `CURRENT_PROTOCOL = 113` with `M
 - `GenisysPro/GenisysPro` — `master`: protocol ID table (identical to Aquamarine's, 93 entries).
 - Minecraft Wiki, *Protocol version* (minecraft.wiki / minecraft.fandom.com mirror) for the historical protocol↔version table.
 
-**Accuracy audit:** every byte layout, constant and enumeration in this directory was cross-checked against the sources above by a six-way verification pass (RakNet, data types, login, world/entities, inventory/UI, entity IDs/command JSON), followed by a second-round audit that re-verified every correction and swept hedged claims (2026-11-18), then dedicated full-text audits of the transport, framing, data-type, packet-registry, login, world, entity, inventory, input/UI, entity-ID and command documents, and regression sweeps of the final state (latest 2026-11-23); client-side behaviours that the sources cannot confirm are marked as such in the text.
+**Accuracy audit:** every byte layout, constant and enumeration in this directory was cross-checked against the sources above by a six-way verification pass (RakNet, data types, login, world/entities, inventory/UI, entity IDs/command JSON), followed by a second-round audit that re-verified every correction and swept hedged claims (2026-11-18), then dedicated full-text audits of the transport, framing, data-type, packet-registry, login, world, entity, inventory, input/UI, entity-ID and command documents, and regression sweeps of the final state, then a final 13-agent pass re-verifying every document with fresh eyes plus a cross-document consistency sweep, including a receive-path audit that documented the reference's first-stage dispatch layer and batch-unpack limits (latest 2026-11-25); client-side behaviours that the sources cannot confirm are marked as such in the text.

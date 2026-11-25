@@ -37,7 +37,7 @@ The client may send `0x45 RequestChunkRadius` at any point after StartGame; the 
 
 | Offset | Field | Type | Notes |
 |-------:|-------|------|-------|
-| 0 | Protocol version | `Int` (**big-endian**) | `113` for 1.1.x releases; servers answer `0x02 PlayStatus(LOGIN_FAILED_CLIENT)` if lower than theirs, `LOGIN_FAILED_SERVER` if higher |
+| 0 | Protocol version | `Int` (**big-endian**) | `113` for 1.1.x releases — the reference also accepts 110-112; only protocols outside that list get `0x02 PlayStatus(LOGIN_FAILED_CLIENT)` if lower than 113, `LOGIN_FAILED_SERVER` otherwise, then a close with **no DisconnectPacket** (notify off) |
 | 4 | Game edition | `Byte` | `0` = Pocket edition |
 | 5 | Connection request | String (`UnsignedVarInt` length + bytes) | a self-contained sub-buffer, decoded below |
 
@@ -100,7 +100,7 @@ The 1.1-era scheme:
 1. Server generates an **ECDH key pair on secp384r1** — created once per server process and reused for every session (not per-connection ephemeral) — plus a random 16-byte salt/token.
 2. Server sends **`0x03 ServerToClientHandshake`** — sent *unencrypted*, immediately before enabling its cipher.
 3. Client derives: shared secret = ECDH(client's `identityPublicKey` private counterpart, server public key); encryption key = **SHA-256(salt ‖ shared-secret)** (salt first).
-4. Client replies **`0x04 ClientToServerHandshake`** and enables its cipher; upon receiving `0x04`, the server continues the login sequence.
+4. Client replies **`0x04 ClientToServerHandshake`** and enables its cipher; upon receiving `0x04` — only if the server previously sent `0x03` and is awaiting the handshake (an unsolicited `0x04` is silently ignored) — the server continues the login sequence.
 
 Both `0x03` and `0x04` are sent/received *inside* `0xFE` batches; the first encrypted bytes are the *next* batch's payload (after the `0xFE` byte).
 

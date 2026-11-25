@@ -48,6 +48,7 @@ The schema of a single command version (verified against the template shipped wi
 | `overload.input.parameters` | array | the command's arguments in order |
 | `overload.output` | object | empty on the wire in 1.1 |
 | `permission` | String | display-only marker (`"any"` in the era's implementations); real permission checks happen server-side |
+| `pocketminePermission` | String | the server's real permission string (e.g. `pocketmine.command.say`); added by the reference for every command that calls `setPermission`, and read back for per-player filtering |
 
 ## Parameters
 
@@ -73,7 +74,7 @@ Type strings seen on the wire in the protocol-113 era:
 
 ## Worked example
 
-Two commands as they would appear in the packet's JSON string:
+Two commands exactly as the reference's JSON string carries them (every default command ships the template's single `args`/`rawtext` parameter; descriptions are the raw translation keys; `pocketminePermission` carries the real server-side permission):
 
 ```json
 {
@@ -81,38 +82,39 @@ Two commands as they would appear in the packet's JSON string:
     "versions": [
       {
         "aliases": [],
-        "description": "Sets or queries the world time",
+        "description": "%pocketmine.command.time.description",
         "overloads": {
           "default": {
             "input": {
               "parameters": [
-                { "name": "action", "type": "cmdarg", "optional": false },
-                { "name": "amount", "type": "intarg", "optional": true }
+                { "name": "args", "type": "rawtext", "optional": true }
               ]
             },
             "output": {}
           }
         },
-        "permission": "any"
+        "permission": "any",
+        "pocketminePermission": "pocketmine.command.time.add;pocketmine.command.time.set;pocketmine.command.time.start;pocketmine.command.time.stop"
       }
     ]
   },
   "say": {
     "versions": [
       {
-        "aliases": [],
-        "description": "Broadcasts a message to all players",
+        "aliases": ["broadcast", "announce"],
+        "description": "%pocketmine.command.say.description",
         "overloads": {
           "default": {
             "input": {
               "parameters": [
-                { "name": "message", "type": "rawtext", "optional": false }
+                { "name": "args", "type": "rawtext", "optional": true }
               ]
             },
             "output": {}
           }
         },
-        "permission": "any"
+        "permission": "any",
+        "pocketminePermission": "pocketmine.command.say"
       }
     ]
   }
@@ -123,4 +125,4 @@ Two commands as they would appear in the packet's JSON string:
 
 * The client matches the text after `/` against command **names and aliases** from this JSON; unmatched input is sent anyway as a `CommandStepPacket` (`0x4f`) and the server decides.
 * Parameter `type`/`optional` drive the on-screen argument hints; they are cosmetic — the server receives whatever the player typed.
-* Commands the client does not know (JSON sent before join, or commands hidden per-player) still execute when submitted; the JSON only affects client-side presentation.
+* Commands the client does not know (JSON sent during login completion — only if at least one command produces data — or commands hidden per-player) still execute when submitted; the JSON only affects client-side presentation.
