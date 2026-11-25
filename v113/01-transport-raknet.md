@@ -1,6 +1,6 @@
 # 01 — Transport layer: RakNet over UDP
 
-MCPE 1.1.x speaks its game protocol on top of a modified RakNet, carried over plain **UDP**. The default server port is **19132** (the client defaults to it; a server may listen anywhere, and the port is entered manually or discovered via LAN broadcast). RakNet provides reliability, ordering, fragmentation and session management; every MCPE "game packet" (see [02-framing-batching.md](02-framing-batching.md)) travels as one RakNet message, carried in encapsulated packets — a message larger than the MTU is split across several encapsulated packets and reassembled by the receiver.
+MCPE 1.1.x speaks its game protocol on top of a modified RakNet, carried over plain **UDP**. The default server port is **19132** (the client defaults to it; a server may listen anywhere, and the port is entered manually or discovered via LAN broadcast). RakNet provides reliability, ordering, fragmentation and session management; every MCPE "game packet" (see [02-framing-batching.md](02-framing-batching.md)) travels as one RakNet message, carried in encapsulated packets — a message larger than the MTU minus a 60-byte header allowance is split across several encapsulated packets and reassembled by the receiver.
 
 Reference for the byte formats below: `raklib/protocol/*` in Aquamarine (`stable`).
 
@@ -17,7 +17,7 @@ Reference for the byte formats below: `raklib/protocol/*` in Aquamarine (`stable
 
 ## Offline (sessionless) messages
 
-Offline messages are identified by a single message ID byte; the 16-byte *magic* follows (a few messages put a timestamp or GUID first — the per-message tables below are exact). They are used before a session exists, and for ping/discovery at any time.
+Offline messages are identified by a single message ID byte; the 16-byte *magic* follows (a few messages put a timestamp, GUID or protocol version byte first — the per-message tables below are exact). They are used before a session exists, and for ping/discovery at any time.
 
 ### Unconnected Ping (`0x01`) — C2S
 

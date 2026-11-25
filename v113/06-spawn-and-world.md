@@ -44,7 +44,7 @@ The single most important spawn packet; sent once, before chunks:
 
 | Field | Type | Notes |
 |-------|------|-------|
-| Spawn type | `VarInt` | 0 = player spawn, 1 = world spawn |
+| Spawn type | `VarInt` | 0 = player spawn, 1 = world spawn (the reference only ever sends 0) |
 | Position | BlockPosition | |
 | Spawn forced | `Bool` | |
 
@@ -59,6 +59,8 @@ The single most important spawn packet; sent once, before chunks:
 | Field | Type |
 |-------|------|
 | Time | `VarInt` |
+
+The value is **absolute world time in ticks** (the reference sends `time & 0xffffffff`), not an offset.
 
 **SetDifficultyPacket (`0x3c`) — S2C**
 
@@ -88,7 +90,7 @@ The single most important spawn packet; sent once, before chunks:
 
 The client answers the dimension change with `0x24 PlayerAction` actions 13 (`SPAWN_OVERWORLD`), 14 (`SPAWN_NETHER`) or 7 (`SPAWN_SAME_DIMENSION`) — in the reference, 7 and 13 route to the respawn path, while 14's dimension-confirmation branch is dead code (its `awaitingDimensionChange` flag is only ever set by a commented-out block).
 
-**ShowCreditsPacket (`0x4d`) — S2C**
+**ShowCreditsPacket (`0x4d`) — S2C** (never sent by the reference implementation — layout from the class definition)
 
 | Field | Type |
 |-------|------|
@@ -180,7 +182,7 @@ Server→client: full replacement of a tile's NBT. Client→server: sign text an
 | Position | 3 × `LFloat` |
 | Data | `VarInt` |
 
-Event ID constants:
+Event ID constants — most are exercised by the reference implementation; the exceptions, never sent by it (glosses are vanilla-era meanings), are `EVENT_SOUND_CLICK_FAIL`, `EVENT_PARTICLE_SHOOT`, `EVENT_PARTICLE_EYE_DESPAWN`, `EVENT_GUARDIAN_CURSE`, `EVENT_PARTICLE_BLOCK_FORCE_FIELD`, `EVENT_PARTICLE_PROJECTILE_HIT`, `EVENT_PARTICLE_ENDERMAN_TELEPORT`, `EVENT_PAUSE_GAME` and `EVENT_PLAYERS_SLEEPING`:
 
 | Value | Constant | Meaning |
 |------:|----------|---------|
@@ -219,7 +221,7 @@ Event ID constants:
 | 3004 | `EVENT_STOP_THUNDER` | stop thunder |
 | 3005 | `EVENT_PAUSE_GAME` | pause (data 1 = pause, 0 = resume) |
 | 3500 | `EVENT_REDSTONE_TRIGGER` | redstone trigger |
-| 3501–3508 | `EVENT_CAULDRON_*` | cauldron explode/dye/clean/fill/take |
+| 3501–3508 | `EVENT_CAULDRON_*` | cauldron explode/dye/clean/fill/take (only explode 3501 and water fill/take 3506/3507 are exercised by the reference) |
 | 3600/3601 | `EVENT_BLOCK_START_BREAK` / `EVENT_BLOCK_STOP_BREAK` | mining progress |
 | 4000 | `EVENT_SET_DATA` | legacy block data change |
 | 9800 | `EVENT_PLAYERS_SLEEPING` | all players sleeping |

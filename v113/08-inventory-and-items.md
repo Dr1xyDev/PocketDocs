@@ -41,7 +41,7 @@ Special window IDs used in place of a real container id when addressing player i
 
 ## Equipment
 
-**MobEquipmentPacket (`0x1f`) — C2S** (server re-broadcasts to viewers)
+**MobEquipmentPacket (`0x1f`) — C2S** (the received packet is never relayed — on a held-item change the reference sends its own MobEquipment copies, rebuilt from server state, to the player and viewers)
 
 | Field | Type | Notes |
 |-------|------|-------|

@@ -39,7 +39,7 @@ The client→server gameplay surface (the "client protocol" core) plus the serve
 |-------|------|
 | Position | BlockPosition |
 
-**BlockPickRequestPacket (`0x22`) — C2S**
+**BlockPickRequestPacket (`0x22`) — C2S** (not handled by the reference — no first-stage handler and no main-switch case, so it is decoded and dropped)
 
 Middle-click pick block:
 
@@ -59,6 +59,8 @@ Riding/boat input:
 | Jumping flag | `Bool` (conventional name; the reference reads both Bools as unknown) |
 | Unknown flag | `Bool` |
 
+The reference's handler for this packet is an empty stub — the input is decoded but never acted on.
+
 **RiderJumpPacket (`0x14`) — C2S** — see [07](07-entities.md).
 
 **AnimatePacket (`0x2c`) — Both**
@@ -70,6 +72,8 @@ Riding/boat input:
 | Rowing time | `LFloat` | only for actions 128/129 |
 
 Actions: `1` SWING_ARM, `3` STOP_SLEEP, `4` CRITICAL_HIT, `128` ROW_RIGHT, `129` ROW_LEFT.
+
+On C2S the reference rejects a copy whose entity ID differs from the sender's own — the sender is kicked and their address blocked.
 
 ## Chat and commands
 
@@ -92,6 +96,8 @@ Actions: `1` SWING_ARM, `3` STOP_SLEEP, `4` CRITICAL_HIT, `128` ROW_RIGHT, `129`
 | 4 | `TIP` | tip |
 | 5 | `SYSTEM` | system message |
 | 6 | `WHISPER` | private message |
+
+On C2S the reference processes only type 1 (CHAT): a message over 350 bytes is not acted on and the sender's address is blocked for 10 seconds; lines starting with `./` are treated as `/` (era fast-command hack) and dispatched as commands.
 
 **CommandStepPacket (`0x4f`) — C2S**
 
@@ -165,6 +171,8 @@ Flag bits:
 | Field | Type |
 |-------|------|
 | Radius | `VarInt` (chunks) |
+
+The reference acts only on radii 4–80: anything else is not acted on and the sender's address is blocked; Android/iOS clients (device OS 1/2) announcing a radius above 22 are additionally address-blocked (the radius is still applied).
 
 **ChunkRadiusUpdatedPacket (`0x46`) — S2C** — the server's accepted radius.
 

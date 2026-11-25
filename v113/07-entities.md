@@ -20,7 +20,7 @@ Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entit
 | 9 | `DATA_POTION_AMBIENT` | Byte | ambient potion |
 | 10 | `DATA_JUMP_DURATION` | Byte/Long | jump duration |
 | 11 | `DATA_HURT_TIME` | Int | minecart/boat hurt time |
-| 12 | `DATA_HURT_DIRECTION` | Int | hurt direction |
+| 12 | `DATA_HURT_DIRECTION` | Int | minecart/boat hurt direction |
 | 13/14 | `DATA_PADDLE_TIME_LEFT/RIGHT` | Float | boat paddling |
 | 15 | `DATA_EXPERIENCE_VALUE` | Int | XP orb amount |
 | 16/17/18 | `DATA_MINECART_DISPLAY_BLOCK/OFFSET/HAS_DISPLAY` | Int/Int/Byte | minecart display block |
@@ -207,6 +207,8 @@ The reference's only processing of the C2S copy is a first-stage `MoveEntityPack
 | Riding entity ID | `VarInt` | vehicle when riding, else 0 |
 | Teleport cause | `LInt` | only when mode = 2 |
 | Teleport item | `LInt` | only when mode = 2 |
+
+On C2S the reference acts only on the position, yaw and pitch: `mode`, `on ground`, `riding entity ID` and body yaw are ignored on receive, and a report more than 1 block from the server's expected position is not applied — it is answered with a mode-1 (reset) correction instead.
 
 ## Attribute / effect / event packets
 
