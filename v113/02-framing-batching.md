@@ -52,7 +52,7 @@ Checksum trailer: 1.1-era server implementations append an **8-byte checksum** t
 ## Where each direction puts things
 
 * **C2S**: the client sends *everything* inside a Batch (see "The `0xFE` identifier" above) — there are no unbatched client packets in protocol 113.
-* **S2C**: servers likewise deliver every game packet inside a Batch. Batches are never nested (a Batch is never a sub-packet of another Batch).
+* **S2C**: servers likewise deliver every game packet inside a Batch. Batches are never nested (a Batch is never a sub-packet of another Batch) — the reference enforces this by kicking the sender. Its batch unpacker also kicks batches above 250 sub-packets (or a single sub-packet above 1 MB) and silently skips empty-length sub-packets.
 
 Worked example (hex; payload shown inflated for clarity — at 13 bytes it is below the 256-byte threshold, so a real server would send it *stored* with a `78 01` header; the `78 9C` header shown corresponds to the default level-6 stream):
 

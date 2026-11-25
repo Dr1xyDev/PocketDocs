@@ -36,7 +36,7 @@ Entity metadata is a key/type/value map (encoding in [03](03-data-types.md#entit
 | 37 | `DATA_POTION_AUX_VALUE` | Short | potion aux |
 | 38 | `DATA_LEAD_HOLDER_EID` | Long | lead holder |
 | 39 | `DATA_SCALE` | Float | entity scale (default 1) |
-| 40 | `DATA_INTERACTIVE_TAG` | String | button text ("Feed", "Ride"…) — set/cleared by Interact mouse-over (action 4) |
+| 40 | `DATA_INTERACTIVE_TAG` | String | button text — the stored value is the translation key itself (e.g. "action.interact.feed", "action.interact.ride.horse"); set on the sender's own metadata by Interact mouse-over (action 4) |
 | 41 | `DATA_NPC_SKIN_ID` | String | NPC skin |
 | 42 | `DATA_URL_TAG` | String | URL tag |
 | 43 | `DATA_MAX_AIR` | Short | max air ticks |
